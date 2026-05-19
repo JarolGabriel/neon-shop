@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search") || "";
     const category_id = searchParams.get("category_id") || "";
     const stock_status = searchParams.get("stock_status") || "";
+    const id = searchParams.get("id") || ""; // NUEVO: Capturar el parámetro id
 
     // Calcular rangos matemáticos para el .range() de Supabase
     const from = (page - 1) * limit;
@@ -27,7 +28,12 @@ export async function GET(request: Request) {
       { count: "exact" },
     );
 
-    // 3.CONSTRUCCIÓN DINÁMICA DE FILTROS (Estilo LEGO)
+    // 3. CONSTRUCCIÓN DINÁMICA DE FILTROS (Estilo LEGO)
+    // NUEVO: Si viene un ID específico, filtramos directamente por él (máxima prioridad)
+    if (id) {
+      query = query.eq("id", id);
+    }
+
     if (search) {
       query = query.ilike("name", `%${search}%`);
     }
