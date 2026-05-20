@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // --- GET: Listar TODAS las categorías para el panel de administración ---
@@ -27,7 +27,7 @@ export async function GET() {
 }
 
 // --- POST: Crear una nueva categoría con Imagen Física (form-data) ---
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // 1. Leer los datos en formato Form Data
     const formData = await request.formData();

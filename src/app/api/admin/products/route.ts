@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // --- GET: Listar productos con filtros y paginación ---
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 }
 
 // --- POST: Crear un nuevo producto con Imagen Física (form-data) ---
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // 1. Leer los datos en formato Form Data (para archivos y textos)
     const formData = await request.formData();
