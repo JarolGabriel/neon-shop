@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // --- GET: Listar productos con filtros y paginación ---
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // 1. Capturar la URL y extraer los Query Params
     const { searchParams } = new URL(request.url);
@@ -91,28 +91,37 @@ export async function GET(request: Request) {
   }
 }
 
-// --- POST: Crear un nuevo producto con Imagen Física (form-data) ---
+// --- POST: Crear un nuevo producto con soporte Multi-Imagen (form-data) ---
 export async function POST(request: NextRequest) {
   try {
-    // 1. Leer los datos en formato Form Data (para archivos y textos)
     const formData = await request.formData();
 
+    // 1. EXTRAER ABSOLUTAMENTE TODOS LOS CAMPOS DEL FORM DATA
     const name = formData.get("name") as string;
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
-    const priceStr = formData.get("price") as string;
-    const stockStr = formData.get("stock") as string;
-    const category_id = formData.get("category_id") as string;
     const short_description = formData.get("short_description") as string;
+    const priceStr = formData.get("price") as string;
+    const compareAtPriceStr = formData.get("compare_at_price") as string;
+
+    // Especificaciones técnicas de Neón
     const size = formData.get("size") as string;
+    const color = formData.get("color") as string;
+    const voltage = formData.get("voltage") as string;
+    const material = formData.get("material") as string;
+
+    // Inventario y Estados
+    const stockStr = formData.get("stock") as string;
+    const sku = formData.get("sku") as string;
+    const category_id = formData.get("category_id") as string;
     const is_active_str = formData.get("is_active") as string;
+    const is_featured_str = formData.get("is_featured") as string;
 
-    // Datos exclusivos de la imagen
-    const imageFile = formData.get("image") as File | null;
+    // Datos del arreglo de imágenes
+    const imageFiles = formData.getAll("image") as File[];
     const alt_text = (formData.get("alt_text") as string) || name;
-    const is_primary = formData.get("is_primary") === "true";
 
-    // 2. VALIDACIÓN: Verificar campos obligatorios del producto
+    // 2. VALIDACIONES OBLIGATORIAS
     if (!name || !slug || !priceStr || !category_id) {
       return NextResponse.json(
         {
@@ -122,51 +131,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!imageFile) {
+    if (!imageFiles || imageFiles.length === 0) {
       return NextResponse.json(
-        { error: "Debes subir una imagen obligatoriamente para el producto." },
+        { error: "Debes subir al menos una imagen para el producto." },
         { status: 400 },
       );
     }
 
+    // Parseos estricto de tipos de datos
     const price = parseFloat(priceStr);
+    const compare_at_price = compareAtPriceStr
+      ? parseFloat(compareAtPriceStr)
+      : null;
     const stock = stockStr ? parseInt(stockStr, 10) : 0;
-    const is_active = is_active_str !== "false"; // Por defecto true a menos que envíen "false"
+    const is_active = is_active_str !== "false";
+    const is_featured = is_featured_str === "true";
 
-    // 3. FLUJO DE STORAGE: Subir el archivo físico al Bucket de Supabase
-    // Creamos un nombre de archivo único para evitar colisiones en el Storage
-    const fileExtension = imageFile.name.split(".").pop();
-    const fileName = `${slug}-${Date.now()}.${fileExtension}`;
-    const filePath = `products/${fileName}`;
-
-    // Convertir el archivo a Buffer para que Supabase lo pueda procesar
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Subir al bucket 'product_images'
-    const { data: storageData, error: storageError } =
-      await supabaseAdmin.storage
-        .from("product_images")
-        .upload(filePath, buffer, {
-          contentType: imageFile.type,
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-    if (storageError) {
-      console.error("Error al subir imagen al Storage:", storageError);
-      return NextResponse.json(
-        { error: `Error al subir la imagen: ${storageError.message}` },
-        { status: 500 },
-      );
-    }
-
-    // Obtener la URL pública de la imagen recién subida
-    const {
-      data: { publicUrl },
-    } = supabaseAdmin.storage.from("product_images").getPublicUrl(filePath);
-
-    // 4. INSERCIÓN EN BASE DE DATOS: Tabla 'products'
+    // 3. PRIMER PASO DE BASE DE DATOS: Insertar el producto en la tabla 'products'
     const { data: productData, error: productError } = await supabaseAdmin
       .from("products")
       .insert([
@@ -174,13 +155,19 @@ export async function POST(request: NextRequest) {
           name,
           slug,
           description,
-          price,
-          stock,
           short_description,
+          price,
+          compare_at_price,
           size,
-          category_id,
+          color,
+          voltage,
+          material,
+          stock,
+          sku,
           is_active,
+          is_featured,
           display_order: 0,
+          category_id,
         },
       ])
       .select()
@@ -188,42 +175,78 @@ export async function POST(request: NextRequest) {
 
     if (productError) {
       console.error("Error al crear producto en DB:", productError);
-
       return NextResponse.json(
         { error: productError.message },
         { status: 400 },
       );
     }
 
-    // 5. RELACIÓN DE IMAGEN: Insertar la URL en la tabla 'product_images'
-    const { error: imageTableError } = await supabaseAdmin
-      .from("product_images")
-      .insert([
-        {
-          product_id: productData.id,
-          image_url: publicUrl,
-          alt_text,
-          is_primary,
-          display_order: 0,
-        },
-      ]);
+    // 4. FLUJO MULTI-IMAGEN: Ahora que 'productData.id' existe, iteramos el arreglo
+    const uploadedImages = [];
 
-    if (imageTableError) {
-      console.error("Error al registrar imagen en DB:", imageTableError);
-      return NextResponse.json(
-        {
-          error: `Producto creado, pero falló el registro de la imagen: ${imageTableError.message}`,
-        },
-        { status: 400 },
-      );
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+
+      // Nombre de archivo único usando el índice para evitar colisiones en Storage
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `${slug}-${Date.now()}-${i}.${fileExtension}`;
+      const filePath = `products/${fileName}`;
+
+      // Convertir archivo a Buffer para Supabase Storage
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // A. Subir el archivo al Storage
+      const { error: storageError } = await supabaseAdmin.storage
+        .from("product_images")
+        .upload(filePath, buffer, {
+          contentType: file.type,
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (storageError) {
+        console.error(
+          `Error al subir la imagen [${i}] al Storage:`,
+          storageError,
+        );
+        continue;
+      }
+
+      // B. Obtener su URL pública permanente
+      const {
+        data: { publicUrl },
+      } = supabaseAdmin.storage.from("product_images").getPublicUrl(filePath);
+
+      // C. Regla de negocio: la primera imagen del arreglo (índice 0) se marca como de portada
+      const isPrimaryImage = i === 0;
+
+      // D. Guardar la relación en la tabla 'product_images' enlazada al ID del producto creado
+      const { data: imageData, error: imageTableError } = await supabaseAdmin
+        .from("product_images")
+        .insert([
+          {
+            product_id: productData.id,
+            image_url: publicUrl,
+            alt_text: `${alt_text} - Foto ${i + 1}`,
+            is_primary: isPrimaryImage,
+            display_order: i,
+          },
+        ])
+        .select()
+        .single();
+
+      if (!imageTableError && imageData) {
+        uploadedImages.push(imageData);
+      }
     }
 
-    // 6. RESPUESTA EXITOSA: Retornamos el producto completo enriquecido con su nueva imagen
+    // 5. RESPUESTA ULTRA-PROFESIONAL CON TODA LA DATA REGISTRADA
     return NextResponse.json(
       {
-        message: "Producto e imagen creados con éxito",
+        message: `Producto creado con éxito. Se procesaron ${uploadedImages.length} imágenes.`,
         product: productData,
-        image_url: publicUrl,
+        images: uploadedImages,
       },
       { status: 201 },
     );

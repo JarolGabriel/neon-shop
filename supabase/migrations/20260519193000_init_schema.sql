@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
 );
 
 -- =====================================================================
--- 3. TABLA: PRODUCTS (¡Actualizada con TODO tu Notion!)
+-- 3. TABLA: PRODUCTS 
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS public.products (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

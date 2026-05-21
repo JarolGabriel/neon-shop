@@ -32,7 +32,7 @@ export async function verifyAdmin(req: NextRequest) {
     return { error: "Token inválido o expirado.", status: 401 };
   }
 
-  // 3. 💡 EL CAMBIO CLAVE: Usamos supabaseAdmin (Service Role) para leer la tabla profiles.
+  // 3. EL CAMBIO CLAVE: Usamos supabaseAdmin (Service Role) para leer la tabla profiles.
   // Como este cliente corre en el servidor, se salta el RLS y puede ver el rol real de forma segura.
   const { data: profile, error: dbError } = await supabaseAdmin
     .from("profiles")
