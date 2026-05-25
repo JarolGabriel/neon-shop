@@ -7,6 +7,7 @@ type SiteSettingUpdate =
   Database["public"]["Tables"]["site_settings"]["Update"];
 type SiteSettingInsert =
   Database["public"]["Tables"]["site_settings"]["Insert"];
+type SiteSettingRow = Database["public"]["Tables"]["site_settings"]["Row"];
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -45,5 +46,49 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Error desconocido";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    // Consultamos toda la configuración
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("key, value");
+
+    if (error) throw error;
+
+    // Transformamos el array (formato DB) a un objeto simple (formato Frontend)
+    // Usamos el tipo SiteSettingRow para asegurar que 'curr' tenga 'key' y 'value'
+    const settings = (data as SiteSettingRow[]).reduce(
+      (acc: Record<string, string>, curr: SiteSettingRow) => {
+        acc[curr.key] = curr.value || "";
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: settings,
+      },
+      { status: 200 },
+    );
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Error desconocido al obtener configuraciones";
+    console.error("❌ Admin Settings GET Error:", message);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "No se pudieron cargar las configuraciones",
+        error: message,
+      },
+      { status: 500 },
+    );
   }
 }
