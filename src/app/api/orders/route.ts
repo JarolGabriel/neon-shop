@@ -129,7 +129,6 @@ export async function POST(request: NextRequest) {
     const settings = await getSiteSettings();
     const adminEmail =
       settings.support_email || "tu_email_por_defecto@gmail.com";
-    const clienteEmailDePrueba = "jarolgabriel.jimenez70@gmail.com";
 
     let emailItemsHtml = "";
     typedCartItems.forEach((item) => {
@@ -150,7 +149,7 @@ export async function POST(request: NextRequest) {
     try {
       await resend.emails.send({
         from: "Neon Shop <onboarding@resend.dev>",
-        to: clienteEmailDePrueba,
+        to: customer_email,
         subject: `✨ Recibo de Pedido # ${orderNum} - Neon Shop`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -162,7 +161,11 @@ export async function POST(request: NextRequest) {
             <p><b>Total:</b> $${totalUsd.toFixed(2)} USD</p>
           </div>`,
       });
+    } catch (err) {
+      console.error("Error enviando correo al cliente:", err);
+    }
 
+    try {
       let whatsappText = `⚡ *¡NUEVO PEDIDO!* ⚡\n\n🆔 *Orden:* \`${orderNum}\`\n👤 *Cliente:* ${customer_name}\n`;
       typedCartItems.forEach((item, index) => {
         whatsappText += `${index + 1}. *${item.products?.name}* - Cant: ${item.quantity}\n`;
@@ -176,7 +179,7 @@ export async function POST(request: NextRequest) {
         text: whatsappText,
       });
     } catch (emailError) {
-      console.error("⚠️ Error en Resend:", emailError);
+      console.error("Error en Resend:", emailError);
     }
 
     return NextResponse.json(

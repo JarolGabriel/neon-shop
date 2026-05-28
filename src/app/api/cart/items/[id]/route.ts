@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// 3. PUT /api/cart/items/[id] -> MODIFICAR CANTIDAD
-
+// 3. PUT /api/cart/items/[id]
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -10,8 +9,14 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { quantity } = body;
+    const { quantity, session_id } = body;
 
+    if (!session_id) {
+      return NextResponse.json(
+        { error: "session_id es requerido" },
+        { status: 400 },
+      );
+    }
     if (!quantity || quantity < 1) {
       return NextResponse.json(
         { error: "La cantidad debe ser igual o mayor a 1" },
@@ -19,25 +24,32 @@ export async function PUT(
       );
     }
 
-    const { data: updatedItem, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("cart_items")
       .update({
         quantity,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .select()
-      .single();
+      .eq("session_id", session_id)
+      .select();
 
     if (error)
       return NextResponse.json({ error: error.message }, { status: 400 });
 
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: "Ítem no encontrado o acceso no autorizado" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json(
-      { message: "Cantidad modificada con éxito", data: updatedItem },
+      { message: "Cantidad modificada con éxito", data: data[0] },
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error crítico en PUT /api/cart/items:", error);
+    console.error("Error en PUT /api/cart/items:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 },
@@ -45,29 +57,49 @@ export async function PUT(
   }
 }
 
-// 4. DELETE /api/cart/items/[id] -> QUITAR ÍTEM
-
+// 4. DELETE /api/cart/items/[id]
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    // En DELETE, el session_id lo sacaremos de los Query Params
+    const { searchParams } = new URL(request.url);
+    const session_id = searchParams.get("session_id");
 
-    const { error } = await supabaseAdmin
+    if (!session_id) {
+      return NextResponse.json(
+        { error: "session_id es requerido en los parámetros" },
+        { status: 400 },
+      );
+    }
+
+    // ✅ Filtramos por ID y por session_id (Ownership Check)
+    const { data, error } = await supabaseAdmin
       .from("cart_items")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("session_id", session_id)
+      .select();
 
     if (error)
       return NextResponse.json({ error: error.message }, { status: 400 });
+
+    // Si data está vacío, es que no encontró el ítem bajo esa sesión
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: "Ítem no encontrado o acceso no autorizado" },
+        { status: 404 },
+      );
+    }
 
     return NextResponse.json(
       { message: "Producto removido del carrito" },
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error crítico en DELETE /api/cart/items:", error);
+    console.error("Error en DELETE /api/cart/items:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 },
