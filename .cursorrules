@@ -1,0 +1,543 @@
+# ============================================================
+
+# NEON SHOP — CURSOR RULES
+
+# Reglas para el desarrollo del frontend
+
+# ============================================================
+
+## 1. CONTEXTO DEL PROYECTO
+
+Neon Shop es una tienda e-commerce para un taller de letreros LED/Neón. El
+proyecto tiene tres secciones principales:
+
+- **Tienda pública** — catálogo de productos, carrito, checkout, showroom
+  (social feed de clientes)
+- **Panel Admin** — gestión de productos, órdenes, categorías, diseños
+  personalizados, promociones
+- **Diseño Personalizado** — formulario para que clientes pidan letreros hechos
+  a la medida
+
+El backend ya está 100% construido como API Routes de Next.js en
+`/src/app/api/`. Las compras NO usan pasarela de pago; el flujo termina
+generando un mensaje de WhatsApp.
+
+---
+
+## 2. STACK TECNOLÓGICO
+
+- **Framework:** Next.js 16.2.6 (App Router) con React 19
+- **Lenguaje:** TypeScript estricto
+- **Estilos:** Tailwind CSS v4 + shadcn/ui + Framer Motion
+- **Base de datos:** Supabase (PostgreSQL) — acceso SOLO vía los API Routes,
+  nunca directo desde el cliente
+- **Autenticación:** JWT manual (tokens almacenados en localStorage)
+- **Formularios:** React Hook Form + Zod
+- **Tema:** next-themes (dark por default, con toggle en Navbar)
+- **Deploy:** Vercel
+
+---
+
+## 3. ESTRUCTURA DE CARPETAS (OBLIGATORIA)
+
+```
+src/
+├── app/
+│   ├── (public)/           # Rutas públicas (tienda, showroom)
+│   │   ├── page.tsx        # Home
+│   │   ├── productos/
+│   │   ├── showroom/
+│   │   └── checkout/
+│   ├── (admin)/            # Rutas del panel de administración
+│   │   └── admin/
+│   ├── api/                # ← YA EXISTE. NO TOCAR.
+│   └── layout.tsx
+├── components/
+│   ├── ui/                 # shadcn/ui (auto-generados, no modificar)
+│   ├── shared/             # Componentes reutilizables (Navbar, Footer, etc.)
+│   ├── store/              # Componentes específicos de la tienda
+│   ├── admin/              # Componentes del panel admin
+│   └── showroom/           # Componentes del feed social
+├── hooks/                  # Custom hooks (useCart, useAuth, useProducts, etc.)
+├── context/                # React Context (AuthContext, CartContext)
+├── lib/
+│   ├── api.ts              # Funciones fetch centralizadas para consumir el backend
+│   └── utils.ts            # ← YA EXISTE. No duplicar utilidades aquí.
+├── types/                  # ← YA EXISTE. Extender, no duplicar.
+└── services/               # ← YA EXISTE. No duplicar lógica aquí.
+```
+
+---
+
+## 4. REGLAS DE CONSUMO DEL BACKEND (CRÍTICO)
+
+### 4.1 — Nunca llamar a Supabase directamente desde el cliente
+
+El cliente (browser) NO debe importar `@supabase/supabase-js` ni usar
+`supabaseAdmin`. **Toda la comunicación con la base de datos pasa por los API
+Routes.**
+
+```typescript
+// ❌ PROHIBIDO en cualquier componente o página
+import { supabase } from "@/lib/supabase";
+const { data } = await supabase.from("products").select("*");
+
+// ✅ CORRECTO — consumir el API Route
+const response = await fetch("/api/products?page=1&limit=12");
+const { data, meta } = await response.json();
+```
+
+### 4.2 — Centralizar todos los fetch en `/src/lib/api.ts`
+
+Crear una función por cada endpoint. **Nunca escribir un `fetch('/api/...')`
+directo dentro de un componente.**
+
+```typescript
+// src/lib/api.ts
+export async function getProducts(params: ProductFilters) {
+  const query = new URLSearchParams({ ...params }).toString();
+  const res = await fetch(`/api/products?${query}`);
+  if (!res.ok) throw new Error("Error al obtener productos");
+  return res.json(); // { data: Product[], meta: PaginationMeta }
+}
+```
+
+### 4.3 — Autenticación: pasar el token en el header
+
+Las rutas protegidas requieren `Authorization: Bearer <token>`. El token se
+guarda en `localStorage` con la clave `access_token`.
+
+```typescript
+// ✅ Patrón correcto para rutas que requieren auth
+const token = localStorage.getItem("access_token");
+const res = await fetch("/api/showroom", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(payload),
+});
+```
+
+### 4.4 — Rutas admin requieren token de admin
+
+El middleware `/src/middleware.ts` ya protege `/api/admin/*` automáticamente. El
+frontend solo debe asegurarse de incluir el token en cada petición y manejar el
+401/403.
+
+### 4.5 — Endpoints con multipart/form-data (NO usar application/json)
+
+Los siguientes endpoints reciben archivos. Usar `FormData`, NO `JSON.stringify`.
+**No incluir el header `Content-Type` manualmente** cuando se usa FormData — el
+browser lo pone automáticamente con el boundary correcto.
+
+```typescript
+// ✅ Patrón correcto para endpoints multipart
+const formData = new FormData();
+formData.append("name", "Neon Anime");
+formData.append("image", file); // File object
+
+const res = await fetch("/api/admin/products", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${token}` },
+  // ⚠️ NO poner Content-Type aquí — el browser lo hace solo con FormData
+  body: formData,
+});
+```
+
+**Endpoints que usan multipart/form-data:**
+
+- `POST /api/admin/products` — (name, slug, description, price, stock,
+  category_id, image, alt_text, is_primary)
+- `POST /api/admin/products/[id]/images` — (image, alt_text, is_primary)
+- `POST /api/admin/categories` — (name, slug, description, display_order, image,
+  is_active)
+- `POST /api/admin/promotion-images` — (promotion_id, file, display_order,
+  alt_text)
+- `POST /api/custom-designs/upload-logo` — (customer_name, customer_email,
+  customer_phone, design_type, material, usage_type, quantity, budget_range,
+  purpose, delivery_time, file)
+- `POST /api/showroom` — (title, comment, rating, file)
+
+---
+
+## 5. ENDPOINTS DISPONIBLES — REFERENCIA EXACTA
+
+### Públicos (sin auth, Content-Type: application/json)
+
+```
+GET  /api/products
+     ?page, ?limit, ?search, ?category (slug), ?min_price, ?max_price,
+     ?color, ?size, ?in_stock=true, ?sort (newest|price_asc|price_desc|best_seller)
+     → { data: Product[], meta: { total_items, page, limit, total_pages, has_more } }
+
+GET  /api/products/[slug]
+     → { data: Product }
+
+GET  /api/categories
+     → lista de categorías activas
+
+GET  /api/categories/featured
+     → categorías destacadas
+
+GET  /api/categories/[slug]
+     → detalle de una categoría
+
+GET  /api/categories/[slug]/filters
+     → filtros disponibles (colores, tamaños, rango de precio) para esa categoría
+
+GET  /api/promotions/active
+     → promociones activas con sus imágenes
+
+GET  /api/settings
+     → configuración pública (whatsapp_number, support_email, address, business_hours, etc.)
+
+GET  /api/showroom
+     Header opcional: Authorization Bearer <token> (para saber si el user ya dio like)
+     → { success: true, data: ShowroomPost[] }
+     Cada post incluye: likes_count, user_has_liked, profiles (first_name, last_name)
+
+GET  /api/showroom/comments?review_id=[uuid]
+     → comentarios aprobados de un post específico
+
+GET  /api/cart?session_id=[uuid]
+     → { data: CartItem[] } con joins a products y product_variants
+```
+
+### Auth (POST, application/json)
+
+```
+POST /api/auth/sign-up
+     Body: { email, password, first_name, last_name }
+     → { message, user: { id, email, role } }  status 201
+
+POST /api/auth/sign-in
+     Body: { email, password }
+     → { message, session: { access_token, refresh_token, expires_at },
+         user: { id, email, role, first_name, last_name } }  status 200
+```
+
+### Requieren auth — Bearer token (usuario autenticado)
+
+```
+POST   /api/cart
+       Body: { session_id, product_id, variant_id?, quantity, notes? }
+       → { message, data: CartItem }  (201 si nuevo, 200 si actualiza cantidad)
+
+PUT    /api/cart/items/[id]
+       Body: { quantity, session_id }
+       → actualiza cantidad del ítem
+
+DELETE /api/cart/items/[id]?session_id=[uuid]
+       → elimina ítem del carrito
+
+POST   /api/orders
+       Body: { session_id, customer_name, customer_email, customer_phone,
+               delivery_address, delivery_city, user_id? }
+       → { success: true, order_id }  — vacía el carrito, envía emails
+
+POST   /api/showroom   (multipart/form-data)
+       Fields: title, comment, rating (1-5), file (imagen)
+       → { success: true, message, data: Review }
+
+POST   /api/showroom/react
+       Body: { review_id }
+       → toggle like (da like si no tenía, quita si ya tenía)
+
+POST   /api/showroom/comments
+       Body: { review_id, comment }
+       → crea comentario (queda pendiente de moderación)
+
+POST   /api/custom-designs/upload-logo   (multipart/form-data)
+       Fields: customer_name, customer_email, customer_phone, design_type,
+               material, usage_type, quantity, budget_range, purpose,
+               delivery_time, file
+       → crea solicitud de diseño personalizado
+```
+
+### Admin — Bearer token con rol "admin" (protegidos por middleware)
+
+```
+# PRODUCTS
+GET    /api/admin/products?page&limit&search
+POST   /api/admin/products          (multipart/form-data: name, slug, description,
+                                     price, stock, category_id, image, alt_text, is_primary)
+GET    /api/admin/products/[id]
+PUT    /api/admin/products/[id]     Body JSON: { price, stock, name, ... }
+DELETE /api/admin/products/[id]
+
+POST   /api/admin/products/[id]/images    (multipart: image, alt_text, is_primary)
+DELETE /api/admin/products/[id]/images/[imageId]
+
+# CATEGORIES
+GET    /api/admin/categories
+POST   /api/admin/categories        (multipart: name, slug, description, display_order, image, is_active)
+PUT    /api/admin/categories/[id]   Body JSON: { description, display_order, ... }
+DELETE /api/admin/categories/[id]
+
+# ORDERS
+GET    /api/admin/orders
+PATCH  /api/admin/orders/[id]       Body JSON: { status, admin_notes }
+       status values: "pendiente_pago"|"pago_confirmado"|"en_taller"|"enviado"|"entregado"|"cancelado"
+
+# CUSTOM DESIGNS
+GET    /api/admin/custom-designs
+PATCH  /api/admin/custom-designs/[id]   Body JSON: { status, final_price, mockup_url, admin_notes }
+       status values: "pendiente"|"cotizacion_enviada"|"en_produccion"|"entregado"|"cancelado"
+DELETE /api/admin/custom-designs/[id]
+
+# PROMOTIONS
+GET    /api/admin/promotions
+POST   /api/admin/promotions        Body JSON: { title, description, link_url, link_text,
+                                     display_location, is_active, start_date, end_date }
+PATCH  /api/admin/promotions/[id]   Body JSON: mismos campos opcionales
+DELETE /api/admin/promotions/[id]
+
+POST   /api/admin/promotion-images  (multipart: promotion_id, file, display_order, alt_text)
+
+# SETTINGS
+GET    /api/admin/settings
+POST   /api/admin/settings          Body JSON: { key, value, description }
+PATCH  /api/admin/settings          Body JSON: { key, value }
+DELETE /api/admin/settings/[key]
+
+# MODERATION (showroom)
+GET    /api/admin/moderation        → posts y comentarios pendientes
+PATCH  /api/admin/moderation        Body JSON: { target_type: "review"|"comment", target_id, action: "approve"|"reject" }
+```
+
+---
+
+## 6. TIPOS DISPONIBLES (USAR, NO DUPLICAR)
+
+Los tipos ya están definidos en `/src/types/`. Siempre importar desde ahí.
+
+```typescript
+// Tipos de base de datos (generados por Supabase)
+import { Tables } from "@/types/supabase";
+
+// Alias útiles
+type Product = Tables<"products">;
+type Category = Tables<"categories">;
+type CartItem = Tables<"cart_items">;
+type Profile = Tables<"profiles">;
+
+// Enums ya definidos en la DB
+type OrderStatus =
+  | "pendiente_pago"
+  | "pago_confirmado"
+  | "en_taller"
+  | "enviado"
+  | "entregado"
+  | "cancelado";
+type UserRole = "admin" | "customer";
+
+// Tipos de negocio con sus interfaces
+import { Order, OrderItem, CreateOrderPayload } from "@/types/order";
+import {
+  CustomDesign,
+  CustomDesignStatus,
+  DesignType,
+} from "@/types/custom-design";
+```
+
+---
+
+## 7. CARRITO — LÓGICA DE SESSION_ID
+
+El carrito funciona con un `session_id` UUID generado en el cliente para
+usuarios anónimos. Este ID se guarda en `localStorage` con la clave
+`cart_session_id`.
+
+```typescript
+// hooks/useCart.ts — patrón correcto
+function getOrCreateSessionId(): string {
+  let sessionId = localStorage.getItem("cart_session_id");
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("cart_session_id", sessionId);
+  }
+  return sessionId;
+}
+```
+
+---
+
+## 8. FLUJO DE CHECKOUT (sin pasarela de pago)
+
+1. Usuario llena: `customer_name`, `customer_email`, `customer_phone`,
+   `delivery_address`, `delivery_city`
+2. Frontend llama `POST /api/orders` con el `session_id`
+3. Backend crea la orden, vacía el carrito, envía emails vía Resend
+4. Frontend recibe `{ success: true, order_id }` y abre WhatsApp con mensaje
+   prellenado
+5. El número de WhatsApp se obtiene de `GET /api/settings` → clave
+   `whatsapp_number`
+
+```typescript
+const whatsappNumber = settings["whatsapp_number"];
+const message = encodeURIComponent(
+  `Hola! Hice un pedido #${order_id.slice(0, 8).toUpperCase()}`,
+);
+window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
+```
+
+---
+
+## 9. DISEÑO — TOKENS Y PALETA (COMPATIBILIDAD TAILWIND v4 & REACT 19)
+
+### 9.1 — Configuración del Motor de Estilos
+
+El proyecto utiliza **Tailwind CSS v4** mediante la directiva `@theme inline` en
+`globals.css`.
+
+- Queda **estrictamente prohibido** intentar modificar o leer un archivo
+  `tailwind.config.js`, ya que toda la configuración vive en el CSS global.
+- Los tokens de marca están registrados como: `cyber-yellow`, `neon-pink`,
+  `vite-purple`, `vite-dark`, y `neon-surface`.
+
+### 9.2 — Lógica Estricta de Temas (Light / Dark)
+
+El proyecto cuenta con doble tema integrado mediante `next-themes`. El modo
+oscuro es el comportamiento por defecto.
+
+- **Evitar Hidratación en React 19:** El componente `ThemeToggle` NO debe usar
+  estados sincrónicos (`useState` + `useEffect` combinados para fijar un
+  booleano `mounted`). Debe evaluar directamente la propiedad `theme` de forma
+  tolerante para impedir renders en cascada.
+- **Sincronización del Logo:** El título de la tienda "Neon Shop" debe mutar
+  fluidamente: rosa neón en modo claro y amarillo neón en modo oscuro mediante
+  las clases
+  `text-neon-pink transition-colors duration-200 dark:text-cyber-yellow`.
+
+### 9.3 — Reglas de Inyección y Prioridad (Anulación de Componentes)
+
+Shadcn/ui inyecta por defecto tipografías y colores oscuros fijos en componentes
+complejos como menús desplegables, cuadros de diálogo y selectores.
+
+- Al manipular elementos de navegación o desplegables, **siempre** se debe
+  heredar de forma explícita el color del texto usando la clase
+  `text-foreground`.
+- Al escribir o extender estilos en la capa de componentes
+  (`@layer components`), se debe usar obligatoriamente el modificador de
+  prioridad de Tailwind v4 (`!`) en los estados de hover (ej.
+  `hover:text-neon-pink!`) para ganarle el orden de especificidad al CSS
+  inyectado por shadcn/ui.
+- Las superficies de popovers y tarjetas en modo oscuro deben unificarse bajo la
+  variable `--neon-surface` (`#1f1f24`) para evitar rebordes o fondos grises
+  genéricos no cyberpunk.
+
+## 10. REGLAS DE CÓDIGO (OBLIGATORIAS)
+
+### No código espagueti
+
+- Máximo 150 líneas por componente. Si crece, dividirlo.
+- Un componente = una responsabilidad.
+- La lógica de datos va en custom hooks, NO dentro del componente.
+
+### No código repetido (DRY)
+
+- Si un bloque de JSX se repite 2+ veces → extraerlo como componente.
+- Si una llamada a fetch se repite → moverla a `/src/lib/api.ts`.
+- Si un cálculo se repite → moverlo a `/src/lib/utils.ts`.
+
+### TypeScript estricto
+
+- **Prohibido usar `any`**. Usar los tipos de `/src/types/` o definir interfaces
+  específicas.
+- Todos los props de componentes deben tener su interface tipada.
+- Los responses del API deben tener tipo definido.
+
+### Manejo de estados de carga y error
+
+Todo fetch debe manejar los tres estados: loading, error, success.
+
+```tsx
+if (isLoading) return <ProductSkeleton />;
+if (error) return <ErrorMessage message={error} />;
+return <ProductGrid products={products} />;
+```
+
+### Formularios
+
+- Siempre usar React Hook Form + Zod para validación.
+- No usar `useState` para manejar campos de formulario individualmente.
+
+### Componentes de servidor vs cliente
+
+- Por defecto, todos los componentes son Server Components.
+- Usar `'use client'` SOLO cuando se necesite: estado, efectos, event handlers,
+  hooks del browser.
+- No poner `'use client'` en layouts o páginas completas innecesariamente.
+
+---
+
+## 11. LO QUE CURSOR NO DEBE HACER
+
+- ❌ Crear nuevos API Routes — el backend ya está completo
+- ❌ Modificar archivos en `/src/app/api/` — esos no se tocan
+- ❌ Modificar `/src/middleware.ts`
+- ❌ Modificar `/src/lib/supabase.ts`
+- ❌ Importar `@supabase/supabase-js` en componentes cliente
+- ❌ Usar `fetch` con URLs hardcodeadas dentro de componentes — usar
+  `/src/lib/api.ts`
+- ❌ Poner `Content-Type: multipart/form-data` manualmente — el browser lo hace
+  solo con FormData
+- ❌ Crear tablas o consultas directas a la base de datos
+- ❌ Instalar librerías de pago (Stripe, MercadoPago, etc.) — no aplica a este
+  proyecto
+- ❌ Duplicar tipos que ya existen en `/src/types/`
+- ❌ Duplicar lógica de utilidades que ya existe en `/src/lib/utils.ts`
+- ❌ Usar `<form>` nativo sin React Hook Form
+- ❌ Usar `any` en TypeScript
+- ❌ Hacer `console.log` en producción
+
+---
+
+## 12. CONVENCIONES DE NOMBRES
+
+```
+Componentes:      PascalCase    → ProductCard.tsx, CartDrawer.tsx
+Hooks:            camelCase     → useCart.ts, useAuth.ts, useProducts.ts
+Funciones API:    camelCase     → getProducts(), createOrder(), addToCart()
+Páginas:          page.tsx      → siempre el nombre estándar de Next.js
+Tipos/Interfaces: PascalCase   → ProductWithImages, CartState, AuthUser
+Constantes:       UPPER_SNAKE  → WHATSAPP_NUMBER, DEFAULT_PAGE_SIZE
+```
+
+---
+
+## 13. CONTEXTOS GLOBALES NECESARIOS
+
+**AuthContext** — maneja: `user`, `role`, `access_token`, `sign_in()`,
+`sign_out()`, `isAdmin` **CartContext** — maneja: `items`, `sessionId`,
+`addItem()`, `removeItem()`, `updateQuantity()`, `clearCart()`, `total`
+
+---
+
+## 14. PÁGINAS Y RUTAS DEL FRONTEND
+
+```
+/                          → Home (hero, categorías destacadas, productos destacados, showroom preview)
+/productos                 → Catálogo con filtros
+/productos/[slug]          → Detalle de producto
+/showroom                  → Feed social completo
+/checkout                  → Formulario de pedido + resumen del carrito
+/mi-pedido                 → Confirmación de orden + link WhatsApp
+/diseño-personalizado      → Formulario de diseño personalizado
+/auth/login                → Login
+/auth/registro             → Registro
+/admin                     → Dashboard admin (solo role === 'admin')
+/admin/productos           → Gestión de productos
+/admin/ordenes             → Gestión de órdenes
+/admin/categorias          → Gestión de categorías
+/admin/disenos             → Gestión de diseños personalizados
+/admin/promociones         → Gestión de promociones
+/admin/showroom            → Moderación del showroom
+/admin/configuracion       → Site settings
+```
+
+```
+
+```

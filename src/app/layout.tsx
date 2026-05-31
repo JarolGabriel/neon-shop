@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/shared/Footer";
+import { ThemeProvider } from "@/components/layout/theme-provider";
+import { AuthProvider } from "@/context/AuthContext";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -29,7 +33,13 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} min-h-full flex flex-col`}
       >
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

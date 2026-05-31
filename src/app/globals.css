@@ -10,6 +10,7 @@
   --color-neon-pink: #ff007a;
   --color-vite-purple: #bd34fe;
   --color-vite-dark: #1e1e20;
+  --color-neon-surface: var(--neon-surface);
 
   /* Configuración de Fuentes */
   --font-sans: var(--font-inter);
@@ -58,6 +59,17 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-marquee: marquee 25s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 :root {
@@ -81,9 +93,8 @@
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
 
-  /* Colores Auxiliares */
-  --neon-pink: 329 100% 50%;
-  --cyber-yellow: 56 100% 51%;
+  /* Superficie limpia en modo claro */
+  --neon-surface: #ffffff;
 }
 
 .dark {
@@ -92,13 +103,15 @@
   --foreground: oklch(0.985 0 0);
 
   /* Primary estilo Cyberpunk */
-  --primary: 56 100% 51%;
+  --primary: #fcee0a;
   --primary-foreground: oklch(0.145 0 0);
 
-  --card: oklch(0.205 0 0);
+  /* Las cards y popovers ahora usan tu superficie oscura técnica */
+  --card: #1f1f24;
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: #1f1f24;
   --popover-foreground: oklch(0.985 0 0);
+
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -109,6 +122,42 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+
+  /* Mapeo estricto de la superficie neón oscura */
+  --neon-surface: #1f1f24;
+}
+
+@layer components {
+  /* Enlaces interactivos genéricos */
+  .nav-interactive {
+    @apply text-muted-foreground transition-colors duration-200 ease-in-out hover:bg-transparent hover:text-neon-pink!;
+  }
+
+  .dark .nav-interactive {
+    @apply hover:text-cyber-yellow!;
+  }
+
+  /* Links principales de la barra */
+  .nav-link {
+    @apply rounded-full px-3 py-1.5 text-sm font-medium text-foreground transition-colors duration-200 ease-in-out hover:text-neon-pink!;
+  }
+
+  .dark .nav-link {
+    @apply hover:text-cyber-yellow!;
+  }
+
+  /* Items de las listas desplegables (Soluciona las letras negras en modo oscuro) */
+  .nav-dropdown-item {
+    @apply block rounded-lg px-3 py-2 text-sm text-foreground transition-colors duration-200 ease-in-out hover:bg-muted;
+  }
+
+  .nav-dropdown-item:hover {
+    @apply text-neon-pink!;
+  }
+
+  .dark .nav-dropdown-item:hover {
+    @apply text-cyber-yellow!;
+  }
 }
 
 @layer base {
@@ -123,6 +172,6 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-200;
   }
 }
