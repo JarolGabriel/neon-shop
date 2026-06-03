@@ -127,6 +127,15 @@
   --neon-surface: #1f1f24;
 }
 
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer components {
   /* Enlaces interactivos genéricos */
   .nav-interactive {

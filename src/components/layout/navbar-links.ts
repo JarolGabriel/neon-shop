@@ -17,9 +17,9 @@ export const CUSTOM_NAV_ITEMS: NavItem[] = [
   { label: "Diseño de texto", href: "/diseño-personalizado?tipo=texto" },
 ];
 
-/** Pill flotante del navbar — claro en light, #1f1f24 en dark */
+/** Pill flotante del navbar — fondo translúcido con blur (glass) */
 export const NAVBAR_PILL_CLASS =
-  "flex h-14 w-full items-center justify-between gap-3 rounded-full border border-border/50 bg-neon-surface px-4 shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.25)] sm:gap-4 sm:px-5 lg:px-6";
+  "flex h-14 w-full items-center justify-between gap-3 rounded-full border border-border/50 bg-neon-surface/50 px-4 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl backdrop-saturate-150 dark:bg-neon-surface/45 dark:shadow-[0_4px_24px_rgba(0,0,0,0.25)] sm:gap-4 sm:px-5 lg:px-6";
 
 /** Botones/íconos de acción — override del ghost de shadcn */
 export const NAV_ACTION_BTN =
