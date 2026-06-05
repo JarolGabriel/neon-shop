@@ -44,6 +44,35 @@ export interface UniqueColorSwatch {
   colorHex: string | null;
 }
 
+export type ProductDetailImage = Pick<
+  ProductImageRow,
+  "id" | "image_url" | "alt_text" | "is_primary" | "display_order"
+>;
+
+export type ProductDetailVariant = Pick<
+  ProductVariantRow,
+  | "id"
+  | "name"
+  | "sku"
+  | "price"
+  | "stock"
+  | "size"
+  | "color"
+  | "color_hex"
+  | "is_active"
+>;
+
+/** Producto tal como lo devuelve GET /api/products/[slug] */
+export type ProductDetail = ProductRow & {
+  images: ProductDetailImage[];
+  variants: ProductDetailVariant[];
+};
+
+export interface ProductDetailResponse {
+  message: string;
+  data: ProductDetail;
+}
+
 export interface CatalogProductsMeta {
   total_items: number;
   page: number;

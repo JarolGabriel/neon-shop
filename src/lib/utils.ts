@@ -17,6 +17,32 @@ export function formatUsd(amount: number): string {
   }).format(amount)
 }
 
+const SIZE_NAME_MAP: Record<string, string> = {
+  small: "Pequeño",
+  medium: "Mediano",
+  large: "Grande",
+}
+
+/** Traduce el nombre del tamaño al español y convierte pulgadas a centímetros. */
+export function formatSizeLabel(size: string | null): string {
+  if (!size) return ""
+
+  let label = size
+  const lower = size.toLowerCase()
+
+  for (const [en, es] of Object.entries(SIZE_NAME_MAP)) {
+    if (lower.startsWith(en)) {
+      label = label.replace(new RegExp(en, "i"), es)
+      break
+    }
+  }
+
+  return label.replace(
+    /(\d+(?:\.\d+)?)\s*inches?/i,
+    (_, value: string) => `${Math.round(parseFloat(value) * 2.54)} cm`,
+  )
+}
+
 export function getDiscountPercent(
   price: number,
   compareAtPrice: number | null,

@@ -1,6 +1,16 @@
 import type { AuthUser, SignInResponse, SignUpResponse } from "@/types/auth";
 import type { ActivePromotionsResponse } from "@/types/promotion";
-import type { CatalogProductsResponse } from "@/types/product";
+import type {
+  CatalogProduct,
+  CatalogProductsResponse,
+  ProductDetail,
+  ProductDetailResponse,
+} from "@/types/product";
+import type {
+  CreateReviewPayload,
+  ProductReview,
+  ProductReviewsResponse,
+} from "@/types/review";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -113,4 +123,155 @@ export async function getProducts(params?: {
   }
 
   return res.json() as Promise<CatalogProductsResponse>;
+}
+
+export async function getProductBySlug(
+  slug: string,
+): Promise<ProductDetail | null> {
+  const res = await fetch(
+    `${API_BASE}/api/products/${encodeURIComponent(slug)}`,
+    { next: { revalidate: 60 } },
+  );
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Error al obtener el producto");
+
+  const json = (await res.json()) as ProductDetailResponse;
+  return json.data;
+}
+
+export async function getSiteSettings(): Promise<Record<string, string>> {
+  const res = await fetch(`${API_BASE}/api/settings`, {
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) return {};
+
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: Record<string, string>;
+  };
+  return json.data ?? {};
+}
+
+export async function getProductReviews(
+  productId: string,
+): Promise<ProductReview[]> {
+  const res = await fetch(
+    `${API_BASE}/api/resenas?product_id=${encodeURIComponent(productId)}`,
+    { cache: "no-store" },
+  );
+
+  if (!res.ok) {
+    throw new Error("Error al obtener las reseñas");
+  }
+
+  const json = (await res.json()) as ProductReviewsResponse;
+  return json.data ?? [];
+}
+
+export async function createProductReview(
+  payload: CreateReviewPayload,
+): Promise<ProductReview> {
+  const token = getStoredAccessToken();
+
+  const res = await fetch(`${API_BASE}/api/resenas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  const json = (await res.json()) as { data: ProductReview };
+  return json.data;
+}
+
+/** Adapta un ProductDetail (de /api/products/[slug]) al shape de tarjeta de catálogo. */
+function toCatalogProduct(product: ProductDetail): CatalogProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    short_description: product.short_description,
+    description: product.description,
+    price: product.price,
+    compare_at_price: product.compare_at_price,
+    stock: product.stock,
+    color: product.color,
+    size: product.size,
+    sales_count: product.sales_count,
+    is_active: product.is_active,
+    categories: null,
+    product_images: product.images.map(
+      ({ id, image_url, alt_text, is_primary }) => ({
+        id,
+        image_url,
+        alt_text,
+        is_primary,
+      }),
+    ),
+    product_variants: product.variants.map(
+      ({ id, color, color_hex, size, price, stock, is_active }) => ({
+        id,
+        color,
+        color_hex,
+        size,
+        price,
+        stock,
+        is_active,
+      }),
+    ),
+  };
+}
+
+export async function getProductsBySlugs(
+  slugs: string[],
+): Promise<CatalogProduct[]> {
+  const results = await Promise.all(
+    slugs.map((slug) => getProductBySlug(slug).catch(() => null)),
+  );
+
+  return results
+    .filter((product): product is ProductDetail => product != null)
+    .map(toCatalogProduct);
+}
+
+export function getCartSessionId(): string {
+  if (typeof window === "undefined") return "";
+
+  let sessionId = localStorage.getItem("cart_session_id");
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("cart_session_id", sessionId);
+  }
+  return sessionId;
+}
+
+export async function addToCart(payload: {
+  session_id: string;
+  product_id: string;
+  variant_id?: string;
+  quantity: number;
+  notes?: string;
+}): Promise<void> {
+  const token = getStoredAccessToken();
+
+  const res = await fetch(`${API_BASE}/api/cart`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
 }

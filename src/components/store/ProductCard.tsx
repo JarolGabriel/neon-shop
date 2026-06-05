@@ -32,6 +32,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         images={images}
         productName={product.name}
         discountPercent={discountPercent}
+        href={`/productos/${product.slug}`}
       />
 
       <Link

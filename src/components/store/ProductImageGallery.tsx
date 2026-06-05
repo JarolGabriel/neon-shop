@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Loader2, Tag } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { CatalogProductImage } from "@/types/product";
@@ -11,6 +12,7 @@ interface ProductImageGalleryProps {
   images: CatalogProductImage[];
   productName: string;
   discountPercent: number | null;
+  href?: string;
 }
 
 const navButtonClass = cn(
@@ -27,6 +29,7 @@ export function ProductImageGallery({
   images,
   productName,
   discountPercent,
+  href,
 }: ProductImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
@@ -99,9 +102,18 @@ export function ProductImageGallery({
         </motion.div>
       ))}
 
+      {href ? (
+        <Link
+          href={href}
+          className="absolute inset-0 z-10"
+          aria-label={`Ver ${productName}`}
+          tabIndex={-1}
+        />
+      ) : null}
+
       {isActiveLoading ? (
         <div
-          className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60 backdrop-blur-sm"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-muted/60 backdrop-blur-sm"
           aria-label="Cargando imagen"
           role="status"
         >
