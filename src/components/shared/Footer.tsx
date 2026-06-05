@@ -48,7 +48,7 @@ function FooterBrandColumn() {
       </h2>
       <p className="mt-4 text-sm leading-relaxed text-neutral-400">
         Iluminando tu mundo con carteles de neón personalizados y ya hechos,
-        elaborados con cuidado desde 2014.
+        elaborados con cuidado desde 2024.
       </p>
       <p className="mt-4 text-sm leading-relaxed text-neutral-400">
         Contacta con nosotros por chat en directo, teléfono, correo electrónico

@@ -82,11 +82,11 @@ function TestimonialCard({ item }: { item: ImageTestimonial }) {
   return (
     <article
       className={cn(
-        "flex gap-4 rounded-3xl border border-border bg-card/40 p-4 backdrop-blur-md sm:p-5",
+        "flex items-center gap-4 rounded-3xl border border-border bg-card/40 p-4 backdrop-blur-md md:items-stretch sm:p-5",
         CARD_GLOW,
       )}
     >
-      <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl sm:size-28">
+      <div className="relative size-24 shrink-0 self-center overflow-hidden rounded-2xl md:self-auto sm:size-28">
         <Image
           src={item.imageSrc}
           alt={`Letrero de neón de ${item.name}`}
@@ -108,34 +108,52 @@ function TestimonialCard({ item }: { item: ImageTestimonial }) {
 const NAV_BTN =
   "flex size-10 items-center justify-center rounded-full border border-border bg-card/60 text-foreground backdrop-blur-md transition-colors duration-200 hover:bg-card disabled:pointer-events-none disabled:opacity-40";
 
+const AUTO_PLAY_MS = 5000;
+
 export function ImageTestimonials() {
-  const [page, setPage] = useState(0);
-  const [perPage, setPerPage] = useState(1);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(1);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
-    const sync = () => setPerPage(media.matches ? 3 : 1);
+    const sync = () => setVisibleCount(media.matches ? 3 : 1);
     sync();
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
 
-  const pageCount = Math.ceil(IMAGE_TESTIMONIALS.length / perPage);
-  const maxPage = Math.max(0, pageCount - 1);
-
-  useEffect(() => {
-    setPage((current) => Math.min(current, maxPage));
-  }, [maxPage]);
-
-  const goPrev = useCallback(() => setPage((p) => Math.max(0, p - 1)), []);
-  const goNext = useCallback(
-    () => setPage((p) => Math.min(maxPage, p + 1)),
-    [maxPage],
+  const maxSlideIndex = Math.max(
+    0,
+    IMAGE_TESTIMONIALS.length - visibleCount,
   );
 
+  useEffect(() => {
+    setSlideIndex((current) => Math.min(current, maxSlideIndex));
+  }, [maxSlideIndex]);
+
+  const goPrev = useCallback(
+    () => setSlideIndex((i) => Math.max(0, i - 1)),
+    [],
+  );
+  const goNext = useCallback(
+    () => setSlideIndex((i) => (i >= maxSlideIndex ? 0 : i + 1)),
+    [maxSlideIndex],
+  );
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
+
+    const timer = window.setInterval(() => {
+      setSlideIndex((current) => (current >= maxSlideIndex ? 0 : current + 1));
+    }, AUTO_PLAY_MS);
+
+    return () => window.clearInterval(timer);
+  }, [maxSlideIndex]);
+
   const visible = IMAGE_TESTIMONIALS.slice(
-    page * perPage,
-    page * perPage + perPage,
+    slideIndex,
+    slideIndex + visibleCount,
   );
 
   return (
@@ -167,12 +185,12 @@ export function ImageTestimonials() {
       <div className="mx-auto max-w-6xl px-4">
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${page}-${perPage}`}
+            key={slideIndex}
             initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            className="grid grid-cols-1 gap-4 md:grid-cols-3"
+            className="grid grid-cols-1 justify-items-center gap-4 md:grid-cols-3 md:justify-items-stretch"
           >
             {visible.map((item) => (
               <TestimonialCard key={item.id} item={item} />
@@ -181,10 +199,10 @@ export function ImageTestimonials() {
         </AnimatePresence>
 
         <div className="mt-8 flex items-center justify-center gap-6">
-          <button type="button" onClick={goPrev} disabled={page === 0} className={NAV_BTN} aria-label="Reseñas anteriores">
+          <button type="button" onClick={goPrev} disabled={slideIndex === 0} className={NAV_BTN} aria-label="Reseñas anteriores">
             <ChevronLeft className="size-5" />
           </button>
-          <button type="button" onClick={goNext} disabled={page >= maxPage} className={NAV_BTN} aria-label="Reseñas siguientes">
+          <button type="button" onClick={goNext} className={NAV_BTN} aria-label="Reseñas siguientes">
             <ChevronRight className="size-5" />
           </button>
         </div>

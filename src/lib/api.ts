@@ -1,5 +1,6 @@
 import type { AuthUser, SignInResponse, SignUpResponse } from "@/types/auth";
 import type { ActivePromotionsResponse } from "@/types/promotion";
+import type { CatalogProductsResponse } from "@/types/product";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -90,4 +91,26 @@ export async function getActivePromotions(): Promise<ActivePromotionsResponse> {
   }
 
   return res.json() as Promise<ActivePromotionsResponse>;
+}
+
+export async function getProducts(params?: {
+  page?: number;
+  limit?: number;
+  sort?: "newest" | "price_asc" | "price_desc" | "best_seller";
+}): Promise<CatalogProductsResponse> {
+  const query = new URLSearchParams();
+  if (params?.page != null) query.set("page", String(params.page));
+  if (params?.limit != null) query.set("limit", String(params.limit));
+  if (params?.sort) query.set("sort", params.sort);
+
+  const qs = query.toString();
+  const res = await fetch(`${API_BASE}/api/products${qs ? `?${qs}` : ""}`, {
+    next: { revalidate: 60 },
+  });
+
+  if (!res.ok) {
+    throw new Error("Error al obtener productos");
+  }
+
+  return res.json() as Promise<CatalogProductsResponse>;
 }

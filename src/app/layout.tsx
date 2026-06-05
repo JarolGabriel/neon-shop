@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={` h-full antialiased`}>
+    <html lang="es" className="h-full antialiased" suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} min-h-full flex flex-col`}
       >

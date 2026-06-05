@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get("max_price")
       ? parseFloat(searchParams.get("max_price")!)
       : null;
-    const color = searchParams.get("color") || "";
+    const color = searchParams.get("color_hex") || "";
     const size = searchParams.get("size") || "";
     const inStock = searchParams.get("in_stock") === "true";
 
@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
         sales_count,
         is_active,
         categories (id, name, slug),
-        product_images (id, image_url, alt_text, is_primary)
+        product_images (id, image_url, alt_text, is_primary),
+        product_variants (id, color, color_hex, size, price, stock, is_active)
       `,
       { count: "exact" },
     );
@@ -97,14 +98,40 @@ export async function GET(request: NextRequest) {
       query = query.lte("price", maxPrice);
     }
 
-    // 🔧 FIX 3: Color - El backend está correcto, el fix es en el frontend
-
     if (color) {
-      query = query.eq("color", color);
+      const { data: variantProductIds } = await supabaseAdmin
+        .from("product_variants")
+        .select("product_id")
+        .eq("color_hex", color)
+        .eq("is_active", true);
+
+      if (variantProductIds && variantProductIds.length > 0) {
+        const ids = variantProductIds.map((v) => v.product_id);
+        query = query.in("id", ids);
+      } else {
+        return NextResponse.json(
+          { data: [], meta: { total_items: 0, page, limit, total_pages: 0, has_more: false } },
+          { status: 200 }
+        );
+      }
     }
 
     if (size) {
-      query = query.eq("size", size);
+      const { data: variantProductIds } = await supabaseAdmin
+        .from("product_variants")
+        .select("product_id")
+        .eq("size", size)
+        .eq("is_active", true);
+
+      if (variantProductIds && variantProductIds.length > 0) {
+        const ids = variantProductIds.map((v) => v.product_id);
+        query = query.in("id", ids);
+      } else {
+        return NextResponse.json(
+          { data: [], meta: { total_items: 0, page, limit, total_pages: 0, has_more: false } },
+          { status: 200 }
+        );
+      }
     }
 
     if (inStock) {

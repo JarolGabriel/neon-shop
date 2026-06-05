@@ -1,7 +1,18 @@
+// /home/jarol/projects/neon-shop/src/app/api/admin/products/route.ts
+
 import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// --- GET: Listar productos con filtros y paginación ---
+// Definición de interfaz estricta para la creación de variantes vís POST
+interface VariantInput {
+  name: string;
+  sku: string;
+  price?: number;
+  stock?: number;
+  is_active?: boolean;
+}
+
+// --- GET: Listar productos con filtros, paginación y variantes ---
 export async function GET(request: NextRequest) {
   try {
     // 1. Capturar la URL y extraer los Query Params
@@ -12,24 +23,24 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const category_id = searchParams.get("category_id") || "";
     const stock_status = searchParams.get("stock_status") || "";
-    const id = searchParams.get("id") || ""; // NUEVO: Capturar el parámetro id
+    const id = searchParams.get("id") || "";
 
     // Calcular rangos matemáticos para el .range() de Supabase
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // 2. INICIAR LA QUERY BASE DE SUPABASE
+    // 2. INICIAR LA QUERY BASE DE SUPABASE (Incluyendo product_variants sin filtros de estado)
     let query = supabaseAdmin.from("products").select(
       `
         *,
         categories (name, slug),
-        product_images (id, image_url, is_primary, alt_text)
+        product_images (id, image_url, is_primary, alt_text),
+        product_variants (*)
       `,
       { count: "exact" },
     );
 
-    // 3. CONSTRUCCIÓN DINÁMICA DE FILTROS (Estilo LEGO)
-    // NUEVO: Si viene un ID específico, filtramos directamente por él (máxima prioridad)
+    // 3. CONSTRUCCIÓN DINÁMICA DE FILTROS
     if (id) {
       query = query.eq("id", id);
     }
@@ -38,12 +49,10 @@ export async function GET(request: NextRequest) {
       query = query.ilike("name", `%${search}%`);
     }
 
-    // Filtro B: Por Categoría específica
     if (category_id) {
       query = query.eq("category_id", category_id);
     }
 
-    // Filtro C: Por Estado del Inventario
     if (stock_status === "out_of_stock") {
       query = query.eq("stock", 0);
     } else if (stock_status === "low_stock") {
@@ -53,7 +62,6 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. ORDENAMIENTO Y PAGINACIÓN
-    // Los ordenamos por fecha de creación (los más nuevos primero) y aplicamos el rango de página
     const {
       data: products,
       error,
@@ -65,11 +73,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // 5. CÁLCULO DE METADATOS PARA EL FRONTEND
     const totalItems = count || 0;
     const totalPages = Math.ceil(totalItems / limit);
 
-    // 6. RESPUESTA ULTRA-PROFESIONAL
     return NextResponse.json(
       {
         data: products,
@@ -91,12 +97,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// --- POST: Crear un nuevo producto con soporte Multi-Imagen (form-data) ---
+// --- POST: Crear un nuevo producto con soporte Multi-Imagen y Variantes ---
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    // 1. EXTRAER ABSOLUTAMENTE TODOS LOS CAMPOS DEL FORM DATA
+    // 1. EXTRAER CAMPOS DEL FORM DATA
     const name = formData.get("name") as string;
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
@@ -117,9 +123,12 @@ export async function POST(request: NextRequest) {
     const is_active_str = formData.get("is_active") as string;
     const is_featured_str = formData.get("is_featured") as string;
 
-    // Datos del arreglo de imágenes
+    // Datos de imágenes
     const imageFiles = formData.getAll("image") as File[];
     const alt_text = (formData.get("alt_text") as string) || name;
+
+    // NUEVO: Extraer la cadena de texto de variantes
+    const variantsStr = formData.get("variants") as string;
 
     // 2. VALIDACIONES OBLIGATORIAS
     if (!name || !slug || !priceStr || !category_id) {
@@ -138,7 +147,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parseos estricto de tipos de datos
+    // Parseos estrictos
     const price = parseFloat(priceStr);
     const compare_at_price = compareAtPriceStr
       ? parseFloat(compareAtPriceStr)
@@ -146,6 +155,25 @@ export async function POST(request: NextRequest) {
     const stock = stockStr ? parseInt(stockStr, 10) : 0;
     const is_active = is_active_str !== "false";
     const is_featured = is_featured_str === "true";
+
+    // Procesar variantes si se enviaron en la petición
+    let parsedVariants: VariantInput[] = [];
+    if (variantsStr) {
+      try {
+        parsedVariants = JSON.parse(variantsStr);
+        if (!Array.isArray(parsedVariants)) {
+          return NextResponse.json(
+            { error: "El campo 'variants' debe ser un arreglo JSON válido." },
+            { status: 400 },
+          );
+        }
+      } catch (e) {
+        return NextResponse.json(
+          { error: "El formato de 'variants' no es un JSON válido." },
+          { status: 400 },
+        );
+      }
+    }
 
     // 3. PRIMER PASO DE BASE DE DATOS: Insertar el producto en la tabla 'products'
     const { data: productData, error: productError } = await supabaseAdmin
@@ -181,22 +209,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. FLUJO MULTI-IMAGEN: Ahora que 'productData.id' existe, iteramos el arreglo
+    // 4. FLUJO MULTI-IMAGEN: Guardar imágenes en Storage y en la tabla 'product_images'
     const uploadedImages = [];
 
     for (let i = 0; i < imageFiles.length; i++) {
       const file = imageFiles[i];
-
-      // Nombre de archivo único usando el índice para evitar colisiones en Storage
       const fileExtension = file.name.split(".").pop();
       const fileName = `${slug}-${Date.now()}-${i}.${fileExtension}`;
       const filePath = `products/${fileName}`;
 
-      // Convertir archivo a Buffer para Supabase Storage
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // A. Subir el archivo al Storage
       const { error: storageError } = await supabaseAdmin.storage
         .from("product_images")
         .upload(filePath, buffer, {
@@ -213,15 +237,12 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // B. Obtener su URL pública permanente
       const {
         data: { publicUrl },
       } = supabaseAdmin.storage.from("product_images").getPublicUrl(filePath);
 
-      // C. Regla de negocio: la primera imagen del arreglo (índice 0) se marca como de portada
       const isPrimaryImage = i === 0;
 
-      // D. Guardar la relación en la tabla 'product_images' enlazada al ID del producto creado
       const { data: imageData, error: imageTableError } = await supabaseAdmin
         .from("product_images")
         .insert([
@@ -241,12 +262,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. RESPUESTA ULTRA-PROFESIONAL CON TODA LA DATA REGISTRADA
+    // NUEVO: 5. INSERCIÓN DE VARIANTES (Si existen en la petición)
+    const createdVariants = [];
+    if (parsedVariants.length > 0) {
+      // Mapeamos el arreglo agregando de forma obligatoria el id del producto recién creado
+      const variantsToInsert = parsedVariants.map((v) => ({
+        product_id: productData.id,
+        name: v.name,
+        sku: v.sku,
+        price: v.price ?? price, // Si la variante no tiene precio propio, hereda el del producto
+        stock: v.stock ?? 0,
+        is_active: v.is_active ?? true,
+      }));
+
+      const { data: variantsData, error: variantsError } = await supabaseAdmin
+        .from("product_variants")
+        .insert(variantsToInsert)
+        .select();
+
+      if (variantsError) {
+        console.error(
+          "Error al insertar variantes, iniciando rollback de limpieza...",
+          variantsError,
+        );
+
+        // Mecanismo de seguridad: Si fallan las variantes, eliminamos el producto para no dejar datos corruptos
+        await supabaseAdmin.from("products").delete().eq("id", productData.id);
+
+        return NextResponse.json(
+          {
+            error: `Error en la creación de variantes: ${variantsError.message}. Registro cancelado.`,
+          },
+          { status: 400 },
+        );
+      }
+
+      if (variantsData) {
+        createdVariants.push(...variantsData);
+      }
+    }
+
+    // 6. RESPUESTA EXITOSA CON VARIANTES INCLUIDAS
     return NextResponse.json(
       {
-        message: `Producto creado con éxito. Se procesaron ${uploadedImages.length} imágenes.`,
+        message: `Producto creado con éxito. Se procesaron ${uploadedImages.length} imágenes y ${createdVariants.length} variantes.`,
         product: productData,
         images: uploadedImages,
+        variants: createdVariants,
       },
       { status: 201 },
     );

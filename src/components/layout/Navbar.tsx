@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, ShoppingCart } from "lucide-react";
@@ -22,14 +23,20 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/context/AuthContext";
+import { useNavbarHidden } from "@/hooks/useScrollDirection";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const userName = user?.first_name ?? user?.email?.split("@")[0] ?? null;
+  const isHidden = useNavbarHidden();
 
   return (
-    <header className="sticky top-0 z-50 w-full px-4 pt-4 sm:px-6">
+    <motion.header
+      className="sticky top-0 z-50 w-full px-4 pt-4 sm:px-6"
+      animate={{ y: isHidden ? "-120%" : "0%" }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+    >
       <div className="mx-auto flex max-w-5xl items-center gap-3">
         <nav className={NAVBAR_PILL_CLASS} aria-label="Principal">
           <Link href="/" className="flex shrink-0 items-center gap-2">
@@ -139,7 +146,7 @@ export function Navbar() {
           </div>
         </nav>
       </div>
-    </header>
+    </motion.header>
   );
 }
 
