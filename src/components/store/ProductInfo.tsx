@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ProductAccordion } from "@/components/store/ProductAccordion";
 import type { ProductAccordionItem } from "@/components/store/ProductAccordion";
 import { ProductBenefits } from "@/components/store/ProductBenefits";
+import { BulkDiscountNotice } from "@/components/store/BulkDiscountNotice";
 import { PaymentInfoCard } from "@/components/store/PaymentInfoCard";
 import { ProductRating } from "@/components/store/ProductRating";
 import { ProductSpecs } from "@/components/store/ProductSpecs";
@@ -147,6 +148,8 @@ export function ProductInfo({
         onSelectSize={selection.selectSize}
         onSelectColor={onSelectColor}
       />
+
+      <BulkDiscountNotice />
 
       <div className="flex flex-col gap-3">
         <Button

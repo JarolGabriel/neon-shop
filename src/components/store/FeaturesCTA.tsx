@@ -21,7 +21,7 @@ const FEATURE_CTA_ITEMS: FeatureCTAItem[] = [
     discount: "¡25% de descuento ahora mismo!",
     buttonLabel: "Sube tu diseño",
     imageSrc: "/images/cta-custom-budget.jpg",
-    href: "/diseño-personalizado",
+    href: "/diseno-personalizado",
     staggerClass: "md:-translate-y-4",
   },
   {

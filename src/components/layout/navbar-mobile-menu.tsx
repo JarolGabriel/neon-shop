@@ -1,11 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {
-  CUSTOM_NAV_ITEMS,
-  NAV_ACTION_BTN,
-  STORE_NAV_ITEMS,
-} from "@/components/layout/navbar-links";
+import { CUSTOM_NAV_ITEMS, NAV_ACTION_BTN } from "@/components/layout/navbar-links";
+import { useCategories } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -49,7 +46,7 @@ export function NavbarMobileMenu({
         </SheetHeader>
 
         <nav className="flex flex-col gap-6 px-4">
-          <MobileSection title="Tienda" items={STORE_NAV_ITEMS} />
+          <MobileStoreSection />
           <MobileSection
             title="Carteles Personalizados"
             items={CUSTOM_NAV_ITEMS}
@@ -97,6 +94,45 @@ export function NavbarMobileMenu({
   );
 }
 
+function MobileStoreSection() {
+  const { categories, isLoading, error } = useCategories();
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Tienda
+      </p>
+      <ul className="flex flex-col gap-0.5">
+        <li>
+          <Link href="/productos" className="nav-dropdown-item text-xs">
+            Ver todos
+          </Link>
+        </li>
+        {isLoading && (
+          <li className="px-3 py-2 text-xs text-muted-foreground">
+            Cargando…
+          </li>
+        )}
+        {error && (
+          <li className="px-3 py-2 text-xs text-muted-foreground">{error}</li>
+        )}
+        {!isLoading &&
+          !error &&
+          categories.map((category) => (
+            <li key={category.id}>
+              <Link
+                href={`/productos?category=${encodeURIComponent(category.slug)}`}
+                className="nav-dropdown-item text-xs"
+              >
+                {category.name}
+              </Link>
+            </li>
+          ))}
+      </ul>
+    </div>
+  );
+}
+
 interface MobileSectionProps {
   title: string;
   items: { label: string; href: string }[];
@@ -111,7 +147,7 @@ function MobileSection({ title, items }: MobileSectionProps) {
       <ul className="flex flex-col gap-0.5">
         {items.map((item) => (
           <li key={item.href}>
-            <Link href={item.href} className="nav-dropdown-item">
+            <Link href={item.href} className="nav-dropdown-item text-xs">
               {item.label}
             </Link>
           </li>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/shared/Footer";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
@@ -38,6 +39,7 @@ export default function RootLayout({
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
+            <Toaster position="top-center" richColors closeButton offset={80} />
           </AuthProvider>
         </ThemeProvider>
       </body>

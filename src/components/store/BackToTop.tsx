@@ -2,14 +2,19 @@
 
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function BackToTop() {
+interface BackToTopProps {
+  className?: string;
+}
+
+export function BackToTop({ className }: BackToTopProps = {}) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <div className="flex w-full justify-center px-4 pb-16">
+    <div className={cn("flex w-full justify-center px-4 pb-16", className)}>
       <Button
         variant="outline"
         size="lg"

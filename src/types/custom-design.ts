@@ -43,6 +43,12 @@ export interface CustomDesign {
   approved_at: string | null;
 }
 
+export interface UploadCustomDesignLogoResponse {
+  success: boolean;
+  message: string;
+  data: CustomDesign;
+}
+
 // Lo que el administrador tiene permitido modificar desde su panel
 export interface UpdateCustomDesignPayload {
   status?: CustomDesignStatus;

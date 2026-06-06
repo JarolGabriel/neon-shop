@@ -1,151 +1,249 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Upload } from "lucide-react";
-
+import Image from "next/image";
+import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@/components/ui/dialog";
+import { Form, FormField, FormItem } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  showReviewImageErrorToast,
+  showReviewValidationToasts,
+} from "@/lib/review-toasts";
+import {
+  reviewFormSchema,
+  type ReviewFormValues,
+} from "@/lib/schemas/review";
+import { cn } from "@/lib/utils";
 import { StarRating } from "./StarRating";
 
-const reviewSchema = z.object({
-  rating: z
-    .number({ message: "Selecciona una calificación" })
-    .int()
-    .min(1, "Selecciona una calificación")
-    .max(5),
-  title: z.string().min(1, "El título es obligatorio").max(100),
-  content: z.string().min(1, "Escribe el contenido de tu reseña"),
-  user_name: z.string().min(1, "Ingresa tu nombre de visualización"),
-  email: z.string().email("Correo electrónico inválido"),
-});
+export type { ReviewFormValues };
 
-export type ReviewFormValues = z.infer<typeof reviewSchema>;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 interface ReviewFormProps {
-  onSubmit: (values: ReviewFormValues) => Promise<void>;
+  onSubmit: (values: ReviewFormValues, file?: File | null) => Promise<void>;
 }
 
-const LABEL = "block text-center text-sm font-medium text-foreground";
-const INPUT =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-vite-purple focus-visible:ring-2 focus-visible:ring-vite-purple/40";
+function validateImageFile(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return "Solo se aceptan imágenes JPG, PNG, WebP o GIF.";
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return "La imagen no puede superar los 5 MB.";
+  }
+  return null;
+}
 
 export function ReviewForm({ onSubmit }: ReviewFormProps) {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<ReviewFormValues>({
-    resolver: zodResolver(reviewSchema),
-    defaultValues: { rating: 0 as unknown as number },
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const form = useForm<ReviewFormValues>({
+    resolver: zodResolver(reviewFormSchema),
+    defaultValues: {
+      rating: 0,
+      title: "",
+      content: "",
+      user_name: "",
+      email: "",
+    },
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
   });
 
-  const rating = watch("rating");
+  useEffect(() => {
+    if (!selectedFile) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      showReviewImageErrorToast(validationError);
+      setSelectedFile(null);
+      e.target.value = "";
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFormSubmit = async (values: ReviewFormValues) => {
+    await onSubmit(values, selectedFile);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <div className="flex flex-col items-center gap-1">
-        <span className={LABEL}>Clasificación</span>
-        <StarRating
-          value={rating ?? 0}
-          size="lg"
-          interactive
-          onChange={(v) =>
-            setValue("rating", v, { shouldValidate: true, shouldDirty: true })
-          }
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleFormSubmit, showReviewValidationToasts)}
+        className="flex flex-col gap-3"
+        noValidate
+      >
+        <FormField
+          control={form.control}
+          name="rating"
+          render={({ field }) => (
+            <FormItem className="items-center gap-1 text-center">
+              <Label className="text-sm font-medium text-foreground">
+                Clasificación
+              </Label>
+              <div className="flex justify-center">
+                <StarRating
+                  value={field.value}
+                  size="lg"
+                  interactive
+                  onChange={(v) => field.onChange(v)}
+                />
+              </div>
+            </FormItem>
+          )}
         />
-        {errors.rating && (
-          <p className="text-xs text-destructive">{errors.rating.message}</p>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL} htmlFor="review-title">
-          Título de la reseña <span className="text-muted-foreground">(100)</span>
-        </label>
-        <input
-          id="review-title"
-          className={INPUT}
-          placeholder="Dale un título a tu reseña"
-          maxLength={100}
-          {...register("title")}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem className="gap-1">
+              <Label className="text-center text-sm font-medium text-foreground">
+                Título de la reseña{" "}
+                <span className="text-muted-foreground">(100)</span>
+              </Label>
+              <Input
+                placeholder="Dale un título a tu reseña"
+                maxLength={100}
+                {...field}
+              />
+            </FormItem>
+          )}
         />
-        {errors.title && (
-          <p className="text-xs text-destructive">{errors.title.message}</p>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL} htmlFor="review-content">
-          Contenido de la reseña
-        </label>
-        <textarea
-          id="review-content"
-          className={`${INPUT} min-h-28 resize-y`}
-          placeholder="Empieza a escribir aquí..."
-          {...register("content")}
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem className="gap-1">
+              <Label className="text-center text-sm font-medium text-foreground">
+                Contenido de la reseña
+              </Label>
+              <Textarea
+                placeholder="Empieza a escribir aquí..."
+                className="min-h-20"
+                {...field}
+              />
+            </FormItem>
+          )}
         />
-        {errors.content && (
-          <p className="text-xs text-destructive">{errors.content.message}</p>
-        )}
-      </div>
 
-      <div className="flex flex-col items-center gap-1">
-        <span className={LABEL}>Imagen/Vídeo (opcional)</span>
-        <label className="flex size-24 cursor-pointer items-center justify-center rounded-lg border border-dashed border-input bg-background text-muted-foreground transition-colors hover:border-vite-purple hover:text-vite-purple">
-          <Upload className="size-7" />
-          <input type="file" accept="image/*,video/*" className="sr-only" />
-        </label>
-      </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Label className="text-sm font-medium text-foreground">
+            Imagen (opcional)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Muestra tu letrero neón instalado. Máx. 5 MB.
+          </p>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL} htmlFor="review-name">
-          Nombre de visualización
-        </label>
-        <input
-          id="review-name"
-          className={INPUT}
-          placeholder="Coloca tu nombre aquí"
-          {...register("user_name")}
+          {previewUrl ? (
+            <div className="relative size-20 overflow-hidden rounded-lg border border-input">
+              <Image
+                src={previewUrl}
+                alt="Vista previa de la imagen"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+              <button
+                type="button"
+                onClick={clearFile}
+                className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-foreground/80 text-background"
+                aria-label="Quitar imagen"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : (
+            <label
+              className={cn(
+                "flex size-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-input bg-background text-muted-foreground transition-colors hover:border-vite-purple hover:text-vite-purple",
+              )}
+            >
+              <Upload className="size-6" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                onChange={handleFileChange}
+              />
+            </label>
+          )}
+        </div>
+
+        <FormField
+          control={form.control}
+          name="user_name"
+          render={({ field }) => (
+            <FormItem className="gap-1">
+              <Label className="text-center text-sm font-medium text-foreground">
+                Nombre de visualización
+              </Label>
+              <Input placeholder="Coloca tu nombre aquí" {...field} />
+            </FormItem>
+          )}
         />
-        {errors.user_name && (
-          <p className="text-xs text-destructive">{errors.user_name.message}</p>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL} htmlFor="review-email">
-          Dirección de correo electrónico
-        </label>
-        <input
-          id="review-email"
-          type="email"
-          className={INPUT}
-          placeholder="Tu dirección de correo electrónico"
-          {...register("email")}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className="gap-1">
+              <Label className="text-center text-sm font-medium text-foreground">
+                Dirección de correo electrónico
+              </Label>
+              <Input
+                type="email"
+                placeholder="Tu dirección de correo electrónico"
+                {...field}
+              />
+            </FormItem>
+          )}
         />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
-      </div>
 
-      <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-        <DialogClose asChild>
-          <Button type="button" variant="outline" className="h-10 px-6">
-            Cancelar reseña
+        <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" className="h-10 px-6">
+              Cancelar reseña
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            className="h-10 bg-foreground px-6 text-background hover:bg-foreground/90"
+          >
+            {form.formState.isSubmitting ? "Enviando..." : "Enviar reseña"}
           </Button>
-        </DialogClose>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="h-10 bg-foreground px-6 text-background hover:bg-foreground/90"
-        >
-          {isSubmitting ? "Enviando..." : "Enviar reseña"}
-        </Button>
-      </div>
-    </form>
+        </div>
+      </form>
+    </Form>
   );
 }

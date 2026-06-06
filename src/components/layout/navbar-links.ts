@@ -13,9 +13,13 @@ export const STORE_NAV_ITEMS: NavItem[] = [
 ];
 
 export const CUSTOM_NAV_ITEMS: NavItem[] = [
-  { label: "Subir logo/gráfico", href: "/diseño-personalizado?tipo=logo" },
-  { label: "Diseño de texto", href: "/diseño-personalizado?tipo=texto" },
+  { label: "Subir logo/gráfico", href: "/diseno-personalizado" },
+  { label: "Diseño de texto", href: "/diseno-personalizado?tipo=texto" },
 ];
+
+/** Enlaces del dropdown de navegación (Tienda y Carteles) */
+export const NAV_MENU_LINK_CLASS =
+  "block select-none space-y-1 rounded-md p-2 text-xs leading-none no-underline outline-none transition-colors text-foreground hover:text-neon-pink! dark:hover:text-cyber-yellow!";
 
 /** Pill flotante del navbar — fondo translúcido con blur (glass) */
 export const NAVBAR_PILL_CLASS =
