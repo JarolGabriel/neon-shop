@@ -159,7 +159,7 @@ export function CustomShowcase() {
           Carteles de neón personalizados para tu negocio
         </h2>
         <Link
-          href="/diseño-personalizado"
+          href="/diseno-personalizado"
           className="mt-3 inline-block text-sm font-medium text-foreground underline underline-offset-4 transition-colors duration-200 hover:text-neon-pink! dark:hover:text-cyber-yellow!"
         >
           Consigue un presupuesto GRATIS

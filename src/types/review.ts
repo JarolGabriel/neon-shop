@@ -11,7 +11,7 @@ export interface ProductReview {
   is_verified: boolean;
 }
 
-/** Payload para crear una reseña vía POST /api/resenas */
+/** Campos de texto para crear una reseña vía POST /api/resenas (multipart) */
 export interface CreateReviewPayload {
   product_id: string;
   rating: number;
@@ -19,7 +19,6 @@ export interface CreateReviewPayload {
   content: string;
   user_name: string;
   email: string;
-  media_url?: string | null;
 }
 
 export interface ProductReviewsResponse {

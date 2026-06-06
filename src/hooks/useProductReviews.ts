@@ -28,8 +28,14 @@ export function useProductReviews(productId: string) {
   }, [loadReviews]);
 
   const addReview = useCallback(
-    async (payload: Omit<CreateReviewPayload, "product_id">) => {
-      const created = await createProductReview({ ...payload, product_id: productId });
+    async (
+      payload: Omit<CreateReviewPayload, "product_id">,
+      file?: File | null,
+    ) => {
+      const created = await createProductReview(
+        { ...payload, product_id: productId },
+        file,
+      );
       setReviews((prev) => [created, ...prev]);
       return created;
     },

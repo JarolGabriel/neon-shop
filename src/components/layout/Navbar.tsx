@@ -4,23 +4,17 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, ShoppingCart } from "lucide-react";
-import {
-  CUSTOM_NAV_ITEMS,
-  NAV_ACTION_BTN,
-  NAV_TRIGGER_CLASS,
-  NAVBAR_PILL_CLASS,
-  STORE_NAV_ITEMS,
-} from "@/components/layout/navbar-links";
+import { NAV_ACTION_BTN, NAVBAR_PILL_CLASS } from "@/components/layout/navbar-links";
+import { CustomNavigationMenu } from "@/components/layout/custom-navigation-menu";
 import { NavbarMobileMenu } from "@/components/layout/navbar-mobile-menu";
+import { StoreNavigationMenu } from "@/components/layout/store-navigation-menu";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/context/AuthContext";
 import { useNavbarHidden } from "@/hooks/useScrollDirection";
@@ -47,13 +41,13 @@ export function Navbar() {
             </span>
           </Link>
 
-          <NavigationMenu className="hidden max-w-none flex-1 justify-center lg:flex">
+          <NavigationMenu
+            viewport={false}
+            className="hidden max-w-none flex-1 justify-center lg:flex"
+          >
             <NavigationMenuList className="gap-0.5">
-              <NavDropdown label="Tienda" items={STORE_NAV_ITEMS} />
-              <NavDropdown
-                label="Carteles Personalizados"
-                items={CUSTOM_NAV_ITEMS}
-              />
+              <StoreNavigationMenu />
+              <CustomNavigationMenu />
 
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
@@ -150,37 +144,3 @@ export function Navbar() {
   );
 }
 
-interface NavDropdownProps {
-  label: string;
-  items: { label: string; href: string }[];
-}
-
-function NavDropdown({ label, items }: NavDropdownProps) {
-  return (
-    <NavigationMenuItem>
-      {/* Añadimos text-foreground para que la etiqueta cambie con el tema */}
-      <NavigationMenuTrigger
-        className={cn(NAV_TRIGGER_CLASS, "group text-foreground")}
-      >
-        {label}
-      </NavigationMenuTrigger>
-      <NavigationMenuContent>
-        {/* CORRECCIÓN: Eliminamos rebordes toscos y forzamos text-foreground para los items del menú */}
-        <ul className="grid w-[220px] gap-0.5 rounded-xl border border-border bg-popover p-1.5 shadow-xl text-foreground">
-          {items.map((item) => (
-            <li key={item.href}>
-              <NavigationMenuLink asChild>
-                <Link
-                  href={item.href}
-                  className="nav-dropdown-item block px-3 py-2 rounded-lg text-sm transition-colors hover:bg-muted"
-                >
-                  {item.label}
-                </Link>
-              </NavigationMenuLink>
-            </li>
-          ))}
-        </ul>
-      </NavigationMenuContent>
-    </NavigationMenuItem>
-  );
-}

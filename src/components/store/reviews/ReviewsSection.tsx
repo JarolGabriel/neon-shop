@@ -4,11 +4,17 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useProductReviews } from "@/hooks/useProductReviews";
-import { ReviewForm, type ReviewFormValues } from "./ReviewForm";
+import {
+  showReviewSubmitErrorToast,
+  showReviewSuccessToast,
+} from "@/lib/review-toasts";
+import type { ReviewFormValues } from "@/lib/schemas/review";
+import { ReviewForm } from "./ReviewForm";
 import { ReviewsList } from "./ReviewsList";
 import { ReviewsSummary } from "./ReviewsSummary";
 
@@ -17,19 +23,29 @@ export function ReviewsSection({ productId }: { productId: string }) {
     useProductReviews(productId);
   const [open, setOpen] = useState(false);
 
-  // Punto único de conexión con el backend: aquí se envía la reseña al API.
-  async function handleReviewSubmit(values: ReviewFormValues) {
+  async function handleReviewSubmit(
+    values: ReviewFormValues,
+    file?: File | null,
+  ) {
     try {
-      await addReview({
-        rating: values.rating,
-        title: values.title,
-        content: values.content,
-        user_name: values.user_name,
-        email: values.email,
-      });
+      await addReview(
+        {
+          rating: values.rating,
+          title: values.title,
+          content: values.content,
+          user_name: values.user_name,
+          email: values.email,
+        },
+        file,
+      );
+      showReviewSuccessToast();
       setOpen(false);
     } catch (err) {
-      console.error("Error al enviar la reseña:", err);
+      showReviewSubmitErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Inténtalo de nuevo en unos momentos.",
+      );
     }
   }
 
@@ -45,7 +61,9 @@ export function ReviewsSection({ productId }: { productId: string }) {
             Cargando reseñas...
           </p>
         ) : error ? (
-          <p className="py-8 text-center text-sm text-destructive">{error}</p>
+          <p className="py-8 text-center text-sm text-destructive/90">
+            {error}
+          </p>
         ) : (
           <>
             <ReviewsSummary stats={stats} onWriteReview={() => setOpen(true)} />
@@ -57,9 +75,13 @@ export function ReviewsSection({ productId }: { productId: string }) {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="overflow-hidden sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Escribe una reseña</DialogTitle>
+            <DialogDescription className="sr-only">
+              Comparte tu experiencia con este producto. Los campos marcados son
+              obligatorios.
+            </DialogDescription>
           </DialogHeader>
           <ReviewForm onSubmit={handleReviewSubmit} />
         </DialogContent>

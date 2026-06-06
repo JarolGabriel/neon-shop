@@ -46,7 +46,7 @@ export function BusinessSolutionsBanner() {
             size="lg"
             className="mt-8 rounded-full border-0 bg-vite-purple! px-8 text-white transition-colors duration-200 hover:bg-neon-pink!"
           >
-            <Link href="/diseño-personalizado">Más Información</Link>
+            <Link href="/diseno-personalizado">Más Información</Link>
           </Button>
         </div>
       </div>

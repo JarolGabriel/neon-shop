@@ -59,7 +59,7 @@ function HeroSlideContent({ slide }: HeroSlideContentProps) {
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button asChild size="lg" className={HERO_CTA_CLASS}>
-            <Link href="/diseño-personalizado">Sube tu logotipo o gráfico</Link>
+            <Link href="/diseno-personalizado">Sube tu logotipo o gráfico</Link>
           </Button>
 
           <Button asChild size="lg" className={HERO_CTA_CLASS}>

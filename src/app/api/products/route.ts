@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const color = searchParams.get("color_hex") || "";
     const size = searchParams.get("size") || "";
     const inStock = searchParams.get("in_stock") === "true";
+    const outOfStock = searchParams.get("out_of_stock") === "true";
 
     // Ordenamiento (sort)
     const sortBy = searchParams.get("sort") || "newest";
@@ -134,7 +135,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (inStock) {
+    if (outOfStock) {
+      query = query.eq("stock", 0);
+    } else if (inStock) {
       query = query.gt("stock", 0);
     }
 
