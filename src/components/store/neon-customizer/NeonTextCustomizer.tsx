@@ -31,6 +31,16 @@ const NEON_FONTS = [
   },
   { id: "allura", label: "Allura", family: "Allura" },
   { id: "courgette", label: "Courgette", family: "Courgette" },
+  { id: "kaushan-script", label: "Kaushan Script", family: "Kaushan Script" },
+  { id: "pinyon-script", label: "Pinyon Script", family: "Pinyon Script" },
+  { id: "alex-brush", label: "Alex Brush", family: "Alex Brush" },
+  { id: "yellowtail", label: "Yellowtail", family: "Yellowtail" },
+  { id: "dynalight", label: "Dynalight", family: "Dynalight" },
+  { id: "parisienne", label: "Parisienne", family: "Parisienne" },
+  { id: "sevillana", label: "Sevillana", family: "Sevillana" },
+  { id: "mr-dafoe", label: "Mr Dafoe", family: "Mr Dafoe" },
+  { id: "italianno", label: "Italianno", family: "Italianno" },
+  { id: "ruthie", label: "Ruthie", family: "Ruthie" },
 ] as const;
 
 const NEON_COLORS = [
@@ -87,28 +97,44 @@ const NEON_COLORS = [
 
 const BACKGROUNDS = [
   {
-    id: "bacardi",
-    src: "/images/gallery-bacardi-neon.jpg",
-    label: "Bar",
+    id: "desing1",
+    src: "/images/texto-desing/texto-desing1.jpg",
+    label: "Escena 1",
   },
   {
-    id: "patron",
-    src: "/images/gallery-patron-neon.jpg",
-    label: "Tequila",
+    id: "desing2",
+    src: "/images/texto-desing/texto-desing2.jpg",
+    label: "Escena 2",
   },
-  { id: "hello", src: "/images/gallery-hello.jpg", label: "Sala" },
   {
-    id: "charley",
-    src: "/images/gallery-charleys-steak.jpg",
-    label: "Restaurant",
+    id: "desing3",
+    src: "/images/texto-desing/texto-desing3.jpg",
+    label: "Escena 3",
   },
-  { id: "play", src: "/images/gallery-play-game.jpg", label: "Gaming" },
-  { id: "open", src: "/images/gallery-open.webp", label: "Tienda" },
-  { id: "mikes", src: "/images/gallery-mikes-honey.jpg", label: "Miel" },
   {
-    id: "volcan",
-    src: "/images/gallery-volcan-tequila.jpg",
-    label: "Volcán",
+    id: "desing4",
+    src: "/images/texto-desing/texto-desing4.jpg",
+    label: "Escena 4",
+  },
+  {
+    id: "desing5",
+    src: "/images/texto-desing/texto-desing5.jpg",
+    label: "Escena 5",
+  },
+  {
+    id: "desing6",
+    src: "/images/texto-desing/texto-desing6.jpg",
+    label: "Escena 6",
+  },
+  {
+    id: "desing7",
+    src: "/images/texto-desing/texto-desing7.jpg",
+    label: "Escena 7",
+  },
+  {
+    id: "desing8",
+    src: "/images/texto-desing/texto-desing8.jpg",
+    label: "Escena 8",
   },
   { id: "dark", src: "", label: "Negro" },
 ] as const;
@@ -119,6 +145,33 @@ const SIZE_OPTIONS = [
   { value: "grande", label: "Grande · 80–120 cm" },
   { value: "xl", label: "XL · 120–180 cm" },
   { value: "xxl", label: "XXL · +180 cm" },
+] as const;
+
+const SPECIAL_EFFECTS = [
+  {
+    id: "single",
+    label: "Color único",
+    sublabel: "Con dimmer y mando a distancia (gratis)",
+    icon: "💡",
+  },
+  {
+    id: "dynamic",
+    label: "Neón Dinámico",
+    sublabel: "100+ modos de color y efectos con mando avanzado",
+    icon: "✨",
+  },
+  {
+    id: "rgb",
+    label: "Cambio de color RGB",
+    sublabel: "Control remoto con efectos simples",
+    icon: "🌈",
+  },
+  {
+    id: "multicolor",
+    label: "Texto multicolor",
+    sublabel: "Cada letra puede tener un color diferente",
+    icon: "🎨",
+  },
 ] as const;
 
 const neonTextFormSchema = z.object({
@@ -134,6 +187,7 @@ const neonTextFormSchema = z.object({
   }),
   preferred_color: z.string().optional(),
   preferred_font: z.string().optional(),
+  special_effect: z.string().optional(),
   customer_name: z.string().min(1, "Necesitamos tu nombre").max(120),
   customer_email: z.string().email("Introduce un correo válido"),
   customer_phone: z.string().optional(),
@@ -164,16 +218,25 @@ function getSizeLabel(size: string): string {
   return SIZE_OPTIONS.find((opt) => opt.value === size)?.label ?? size;
 }
 
+function getEffectLabel(value: string | undefined): string {
+  if (!value) return "Color único";
+  const match = SPECIAL_EFFECTS.find(
+    (e) => e.id === value || e.label === value,
+  );
+  return match?.label ?? value;
+}
+
 export function NeonTextCustomizer() {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
-  const [selectedBg, setSelectedBg] = useState("bacardi");
+  const [selectedBg, setSelectedBg] = useState("desing1");
   const [selectedColor, setSelectedColor] = useState<NeonColor>(NEON_COLORS[0]);
   const [selectedFont, setSelectedFont] = useState<NeonFont>(NEON_FONTS[0]);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedUsage, setSelectedUsage] = useState("");
+  const [selectedEffect, setSelectedEffect] = useState("single");
   const [showFontPanel, setShowFontPanel] = useState(false);
   const [textPos, setTextPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -186,6 +249,7 @@ export function NeonTextCustomizer() {
       text_content: "",
       preferred_color: NEON_COLORS[0].label,
       preferred_font: NEON_FONTS[0].label,
+      special_effect: "single",
       customer_name: "",
       customer_email: "",
       customer_phone: "",
@@ -321,6 +385,7 @@ export function NeonTextCustomizer() {
         `📐 Tamaño: ${getSizeLabel(values.preferred_size)}`,
         `💡 Uso: ${usoLabel}`,
         `🎨 Color: ${values.preferred_color || "A definir"}`,
+        `⚡ Efecto: ${getEffectLabel(values.special_effect)}`,
         "",
         `👤 Cliente: ${values.customer_name}`,
         `📧 Email: ${values.customer_email}`,
@@ -351,42 +416,37 @@ export function NeonTextCustomizer() {
   const isPlaceholder = !textContent?.trim();
 
   return (
-    <div className="relative min-h-screen">
-      {isDarkBg ? (
-        <div className="fixed inset-0 z-0 bg-black" aria-hidden />
-      ) : (
-        activeBackground?.src && (
-          <div className="fixed inset-0 z-0">
-            <Image
-              src={activeBackground.src}
-              alt={activeBackground.label}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-          </div>
-        )
-      )}
-
-      {!isDarkBg && (
-        <div
-          className="fixed inset-0 z-[1] bg-black/45"
-          aria-hidden
-        />
-      )}
-
-      <div className="relative z-10 flex min-h-screen flex-col lg:grid lg:grid-cols-[40%_60%]">
+    <div className="flex flex-col lg:grid lg:grid-cols-[65%_35%] lg:items-start">
+      <div className="sticky top-0 z-10 h-[280px] w-full shrink-0 lg:sticky lg:top-6 lg:z-auto lg:h-[calc(100vh-5rem)] lg:px-6 lg:pt-6 lg:pb-8">
         <div
           ref={canvasRef}
-          className="relative flex h-[45vh] items-center justify-center lg:h-[55vh] lg:min-h-screen"
+          className="relative h-full w-full overflow-hidden lg:rounded-lg"
         >
+          {isDarkBg ? (
+            <div className="absolute inset-0 bg-black" aria-hidden />
+          ) : (
+            activeBackground?.src && (
+              <Image
+                src={activeBackground.src}
+                alt={activeBackground.label}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 65vw"
+                priority
+              />
+            )
+          )}
+
+          {!isDarkBg && (
+            <div className="absolute inset-0 bg-black/40" aria-hidden />
+          )}
+
           <div
             ref={textRef}
             role="presentation"
             onMouseDown={handleTextMouseDown}
             onTouchStart={handleTextTouchStart}
-            className="absolute max-w-[90%] whitespace-pre-wrap text-center leading-tight"
+            className="absolute z-10 max-w-[90%] whitespace-pre-wrap text-center leading-tight"
             style={{
               left: textPos.x,
               top: textPos.y,
@@ -404,7 +464,7 @@ export function NeonTextCustomizer() {
             {displayText}
           </div>
 
-          <div className="bg-thumbnails absolute right-0 bottom-3 left-0 mx-4 flex justify-center rounded-xl bg-black/50 px-3 py-2 backdrop-blur-sm">
+          <div className="bg-thumbnails absolute right-0 bottom-3 left-0 z-10 mx-4 flex justify-center rounded-xl bg-black/50 px-3 py-2 backdrop-blur-sm">
             <div className="flex gap-2 overflow-x-auto">
               {BACKGROUNDS.map((bg) => (
                 <button
@@ -436,272 +496,319 @@ export function NeonTextCustomizer() {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="relative z-10 max-h-[70vh] overflow-y-auto border-t border-input bg-card/95 p-6 backdrop-blur-md lg:max-h-[80vh] lg:overflow-y-auto lg:border-t-0">
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="flex flex-col gap-8">
-              <section className="space-y-3">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  1. Tu texto
-                </h2>
-                <div className="flex gap-3">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Label
-                      htmlFor="text_content"
-                      className="text-muted-foreground"
-                    >
-                      ¿Qué dirá tu letrero?
-                    </Label>
-                    <Input
-                      id="text_content"
-                      placeholder="Ej: Abierto, Bienvenidos, Love..."
-                      maxLength={80}
-                      {...register("text_content")}
-                      aria-invalid={!!errors.text_content}
-                    />
-                    <div className="flex justify-between gap-2">
-                      {errors.text_content && (
-                        <p className="text-sm text-destructive">
-                          {errors.text_content.message}
-                        </p>
-                      )}
-                      <p className="ml-auto text-xs text-muted-foreground">
-                        {textContent?.length ?? 0} / 80
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/diseno-personalizado")}
-                    className="w-40 shrink-0 cursor-pointer rounded-xl border-2 border-vite-purple bg-vite-purple/20 p-3 text-center transition-colors hover:bg-vite-purple/30"
+      <div className="max-h-[65vh] overflow-y-auto bg-background p-6 lg:max-h-none lg:overflow-visible">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="flex flex-col gap-8">
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                1. Tu texto
+              </h2>
+              <div className="flex gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Label
+                    htmlFor="text_content"
+                    className="text-muted-foreground"
                   >
-                    <p className="text-xs text-muted-foreground">
-                      ¿Tienes un logo?
+                    ¿Qué dirá tu letrero?
+                  </Label>
+                  <Input
+                    id="text_content"
+                    placeholder="Ej: Abierto, Bienvenidos, Love..."
+                    maxLength={80}
+                    {...register("text_content")}
+                    aria-invalid={!!errors.text_content}
+                  />
+                  <div className="flex justify-between gap-2">
+                    {errors.text_content && (
+                      <p className="text-sm text-destructive">
+                        {errors.text_content.message}
+                      </p>
+                    )}
+                    <p className="ml-auto text-xs text-muted-foreground">
+                      {textContent?.length ?? 0} / 80
                     </p>
-                    <p className="text-sm font-bold text-vite-purple">
-                      SUBIR DISEÑO
-                    </p>
-                  </button>
+                  </div>
                 </div>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  2. Elige la fuente
-                </h2>
                 <button
                   type="button"
-                  onClick={() => setShowFontPanel((prev) => !prev)}
-                  className="flex w-full items-center justify-between rounded-lg border border-input bg-card px-4 py-3 text-foreground"
+                  onClick={() => router.push("/diseno-personalizado")}
+                  className="w-40 shrink-0 cursor-pointer rounded-xl border-2 border-vite-purple bg-vite-purple/20 p-3 text-center transition-colors hover:bg-vite-purple/30"
                 >
-                  <span style={{ fontFamily: selectedFont.family }}>
-                    {selectedFont.label}
-                  </span>
-                  {showFontPanel ? (
-                    <ChevronUp className="size-4 shrink-0" aria-hidden />
-                  ) : (
-                    <ChevronDown className="size-4 shrink-0" aria-hidden />
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    ¿Tienes un logo?
+                  </p>
+                  <p className="text-sm font-bold text-vite-purple">
+                    SUBIR DISEÑO
+                  </p>
                 </button>
-                {showFontPanel && (
-                  <div className="grid max-h-[280px] grid-cols-4 gap-2 overflow-y-auto">
-                    {NEON_FONTS.map((font) => (
-                      <button
-                        key={font.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedFont(font);
-                          setShowFontPanel(false);
-                          setValue("preferred_font", font.label);
-                        }}
-                        className={cn(
-                          "cursor-pointer rounded-lg border p-3 text-center text-[1.1rem]",
-                          selectedFont.id === font.id
-                            ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
-                            : "border-input bg-card text-foreground",
-                        )}
-                        style={{ fontFamily: font.family }}
-                      >
-                        {font.label}
-                      </button>
-                    ))}
-                  </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                2. Elige la fuente
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowFontPanel((prev) => !prev)}
+                className="flex w-full items-center justify-between rounded-lg border border-input bg-card px-4 py-3 text-foreground"
+              >
+                <span style={{ fontFamily: selectedFont.family }}>
+                  {selectedFont.label}
+                </span>
+                {showFontPanel ? (
+                  <ChevronUp className="size-4 shrink-0" aria-hidden />
+                ) : (
+                  <ChevronDown className="size-4 shrink-0" aria-hidden />
                 )}
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  3. Color del neón
-                </h2>
-                <div className="flex flex-wrap gap-3">
-                  {NEON_COLORS.map((color) => (
+              </button>
+              {showFontPanel && (
+                <div className="grid max-h-[320px] grid-cols-4 gap-2 overflow-y-auto">
+                  {NEON_FONTS.map((font) => (
                     <button
-                      key={color.id}
+                      key={font.id}
                       type="button"
                       onClick={() => {
-                        setSelectedColor(color);
-                        setValue("preferred_color", color.label);
+                        setSelectedFont(font);
+                        setShowFontPanel(false);
+                        setValue("preferred_font", font.label);
                       }}
                       className={cn(
-                        "h-9 w-9 cursor-pointer rounded-full border-2 border-transparent transition-transform",
-                        selectedColor.id === color.id &&
-                          "scale-110 ring-2 ring-offset-2 ring-foreground",
+                        "cursor-pointer rounded-lg border p-3 text-center text-[1.1rem]",
+                        selectedFont.id === font.id
+                          ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
+                          : "border-input bg-card text-foreground",
                       )}
-                      style={{ backgroundColor: color.color }}
-                      aria-label={color.label}
-                      aria-pressed={selectedColor.id === color.id}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  El taller confirmará disponibilidad del color.
-                </p>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  4. Tamaño
-                </h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {SIZE_OPTIONS.map((size) => (
-                    <button
-                      key={size.value}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSize(size.value);
-                        setValue("preferred_size", size.value, {
-                          shouldValidate: true,
-                        });
-                      }}
-                      className={cn(
-                        "rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
-                        selectedSize === size.value
-                          ? "border-cyber-yellow bg-cyber-yellow font-semibold text-black"
-                          : "border-input bg-card text-foreground hover:border-cyber-yellow",
-                      )}
+                      style={{ fontFamily: font.family }}
                     >
-                      {size.label}
+                      {font.label}
                     </button>
                   ))}
                 </div>
-                {errors.preferred_size && (
-                  <p className="text-sm text-destructive">
-                    {errors.preferred_size.message}
-                  </p>
-                )}
-              </section>
+              )}
+            </section>
 
-              <section className="space-y-3">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  5. Uso
-                </h2>
-                <div className="grid grid-cols-2 gap-2">
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                3. Color del neón
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {NEON_COLORS.map((color) => (
                   <button
+                    key={color.id}
                     type="button"
                     onClick={() => {
-                      setSelectedUsage("interior");
-                      setValue("usage_type", "interior", {
+                      setSelectedColor(color);
+                      setValue("preferred_color", color.label);
+                    }}
+                    className={cn(
+                      "h-9 w-9 cursor-pointer rounded-full border-2 border-transparent transition-transform",
+                      selectedColor.id === color.id &&
+                        "scale-110 ring-2 ring-offset-2 ring-foreground",
+                    )}
+                    style={{ backgroundColor: color.color }}
+                    aria-label={color.label}
+                    aria-pressed={selectedColor.id === color.id}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                El taller confirmará disponibilidad del color.
+              </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                4. Tamaño
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {SIZE_OPTIONS.map((size) => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSize(size.value);
+                      setValue("preferred_size", size.value, {
                         shouldValidate: true,
                       });
                     }}
                     className={cn(
-                      "rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                      selectedUsage === "interior"
-                        ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
-                        : "border-input bg-card text-foreground",
+                      "rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
+                      selectedSize === size.value
+                        ? "border-cyber-yellow bg-cyber-yellow font-semibold text-black"
+                        : "border-input bg-card text-foreground hover:border-cyber-yellow",
                     )}
                   >
-                    🏠 Interior
+                    {size.label}
                   </button>
+                ))}
+              </div>
+              {errors.preferred_size && (
+                <p className="text-sm text-destructive">
+                  {errors.preferred_size.message}
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                5. Uso
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUsage("interior");
+                    setValue("usage_type", "interior", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                    selectedUsage === "interior"
+                      ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
+                      : "border-input bg-card text-foreground",
+                  )}
+                >
+                  🏠 Interior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUsage("exterior_ip67");
+                    setValue("usage_type", "exterior_ip67", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  className={cn(
+                    "rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                    selectedUsage === "exterior_ip67"
+                      ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
+                      : "border-input bg-card text-foreground",
+                  )}
+                >
+                  🌧️ Exterior
+                </button>
+              </div>
+              {errors.usage_type && (
+                <p className="text-sm text-destructive">
+                  {errors.usage_type.message}
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                6. Efecto especial
+              </h2>
+              <div className="flex flex-col gap-2">
+                {SPECIAL_EFFECTS.map((effect) => (
                   <button
+                    key={effect.id}
                     type="button"
                     onClick={() => {
-                      setSelectedUsage("exterior_ip67");
-                      setValue("usage_type", "exterior_ip67", {
-                        shouldValidate: true,
-                      });
+                      setSelectedEffect(effect.id);
+                      setValue("special_effect", effect.label);
                     }}
                     className={cn(
-                      "rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                      selectedUsage === "exterior_ip67"
-                        ? "border-neon-pink bg-neon-pink/20 text-neon-pink"
-                        : "border-input bg-card text-foreground",
+                      "flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                      selectedEffect === effect.id
+                        ? "border-neon-pink bg-neon-pink/10"
+                        : "border-input bg-card hover:border-neon-pink/50",
                     )}
                   >
-                    🌧️ Exterior
+                    <div
+                      className={cn(
+                        "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                        selectedEffect === effect.id
+                          ? "border-neon-pink"
+                          : "border-muted-foreground",
+                      )}
+                    >
+                      {selectedEffect === effect.id && (
+                        <div className="h-2.5 w-2.5 rounded-full bg-neon-pink" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {effect.icon} {effect.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {effect.sublabel}
+                      </p>
+                    </div>
                   </button>
-                </div>
-                {errors.usage_type && (
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-4 border-t border-input pt-6">
+              <h2 className="font-heading text-lg font-bold text-foreground">
+                7. Tus datos de contacto
+              </h2>
+              <div className="space-y-2">
+                <Label htmlFor="customer_name">Nombre o empresa</Label>
+                <Input
+                  id="customer_name"
+                  {...register("customer_name")}
+                  aria-invalid={!!errors.customer_name}
+                />
+                {errors.customer_name && (
                   <p className="text-sm text-destructive">
-                    {errors.usage_type.message}
+                    {errors.customer_name.message}
                   </p>
                 )}
-              </section>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer_email">Correo electrónico</Label>
+                <Input
+                  id="customer_email"
+                  type="email"
+                  autoComplete="email"
+                  {...register("customer_email")}
+                  aria-invalid={!!errors.customer_email}
+                />
+                {errors.customer_email && (
+                  <p className="text-sm text-destructive">
+                    {errors.customer_email.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer_phone">WhatsApp / Teléfono</Label>
+                <Input
+                  id="customer_phone"
+                  type="tel"
+                  autoComplete="tel"
+                  {...register("customer_phone")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer_notes">Detalles adicionales</Label>
+                <Textarea
+                  id="customer_notes"
+                  placeholder="Medidas exactas, referencias, urgencia..."
+                  rows={3}
+                  maxLength={500}
+                  {...register("customer_notes")}
+                  aria-invalid={!!errors.customer_notes}
+                />
+                {errors.customer_notes && (
+                  <p className="text-sm text-destructive">
+                    {errors.customer_notes.message}
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
 
-              <section className="space-y-4 border-t border-input pt-6">
-                <h2 className="font-heading text-lg font-bold text-foreground">
-                  Tus datos de contacto
-                </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="customer_name">Nombre o empresa</Label>
-                  <Input
-                    id="customer_name"
-                    {...register("customer_name")}
-                    aria-invalid={!!errors.customer_name}
-                  />
-                  {errors.customer_name && (
-                    <p className="text-sm text-destructive">
-                      {errors.customer_name.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customer_email">Correo electrónico</Label>
-                  <Input
-                    id="customer_email"
-                    type="email"
-                    autoComplete="email"
-                    {...register("customer_email")}
-                    aria-invalid={!!errors.customer_email}
-                  />
-                  {errors.customer_email && (
-                    <p className="text-sm text-destructive">
-                      {errors.customer_email.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customer_phone">WhatsApp / Teléfono</Label>
-                  <Input
-                    id="customer_phone"
-                    type="tel"
-                    autoComplete="tel"
-                    {...register("customer_phone")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customer_notes">Detalles adicionales</Label>
-                  <Textarea
-                    id="customer_notes"
-                    placeholder="Medidas exactas, referencias, urgencia..."
-                    rows={3}
-                    maxLength={500}
-                    {...register("customer_notes")}
-                    aria-invalid={!!errors.customer_notes}
-                  />
-                  {errors.customer_notes && (
-                    <p className="text-sm text-destructive">
-                      {errors.customer_notes.message}
-                    </p>
-                  )}
-                </div>
-              </section>
-            </div>
-
+          <div className="mt-6 border-t border-input pt-4 pb-6">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="mt-6 h-auto w-full rounded-xl bg-cyber-yellow py-4 text-lg font-bold text-black transition-colors hover:bg-cyber-yellow/90"
+              className="h-auto w-full rounded-xl bg-cyber-yellow py-4 text-lg font-bold text-black transition-colors hover:bg-cyber-yellow/90"
             >
               {isSubmitting ? (
                 <>
@@ -712,8 +819,8 @@ export function NeonTextCustomizer() {
                 "Cotizar por WhatsApp →"
               )}
             </Button>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );
