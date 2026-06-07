@@ -11,7 +11,11 @@ import type {
   ProductDetail,
   ProductDetailResponse,
 } from "@/types/product";
-import type { UploadCustomDesignLogoResponse } from "@/types/custom-design";
+import type {
+  CreateTextDesignPayload,
+  CreateTextDesignResponse,
+  UploadCustomDesignLogoResponse,
+} from "@/types/custom-design";
 import type {
   CreateReviewPayload,
   ProductReview,
@@ -381,4 +385,41 @@ export async function uploadCustomDesignLogo(
   }
 
   return res.json() as Promise<UploadCustomDesignLogoResponse>;
+}
+
+export async function uploadTextDesign(
+  payload: CreateTextDesignPayload,
+): Promise<CreateTextDesignResponse> {
+  const formData = new FormData();
+  formData.append("file", payload.file);
+  formData.append("customer_name", payload.customer_name);
+  formData.append("customer_email", payload.customer_email);
+  formData.append("text_content", payload.text_content);
+
+  if (payload.customer_phone) {
+    formData.append("customer_phone", payload.customer_phone);
+  }
+  if (payload.preferred_color) {
+    formData.append("preferred_color", payload.preferred_color);
+  }
+  if (payload.preferred_size) {
+    formData.append("preferred_size", payload.preferred_size);
+  }
+  if (payload.usage_type) {
+    formData.append("usage_type", payload.usage_type);
+  }
+  if (payload.customer_notes) {
+    formData.append("customer_notes", payload.customer_notes);
+  }
+
+  const res = await fetch("/api/custom-designs/text-design", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<CreateTextDesignResponse>;
 }

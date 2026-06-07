@@ -49,6 +49,24 @@ export interface UploadCustomDesignLogoResponse {
   data: CustomDesign;
 }
 
+export interface CreateTextDesignPayload {
+  file: File;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  text_content: string;
+  preferred_color?: string;
+  preferred_size?: string;
+  usage_type?: string;
+  customer_notes?: string;
+}
+
+export interface CreateTextDesignResponse {
+  success: boolean;
+  message: string;
+  data: CustomDesign;
+}
+
 // Lo que el administrador tiene permitido modificar desde su panel
 export interface UpdateCustomDesignPayload {
   status?: CustomDesignStatus;
