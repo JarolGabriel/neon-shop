@@ -31,7 +31,7 @@ const FEATURE_CTA_ITEMS: FeatureCTAItem[] = [
     discount: "¡Ahora mismo 50% – 60% de descuento!",
     buttonLabel: "Empieza a diseñar ahora",
     imageSrc: "/images/cta-text-generator.jpg",
-    href: "#",
+    href: "/personalizar",
     staggerClass: "md:translate-y-8",
   },
   {

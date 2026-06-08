@@ -1,8 +1,23 @@
+import dynamic from "next/dynamic";
+import { InfoTicker } from "@/components/shared/InfoTicker";
 import { getActivePromotions } from "@/lib/api";
 import { mapHomeHeroSlides } from "@/lib/promotions";
-import { HeroCarousel } from "@/components/store/HeroCarousel";
-import { InfoTicker } from "@/components/shared/InfoTicker";
 import type { HeroSlide } from "@/types/promotion";
+
+const HeroCarousel = dynamic(
+  () =>
+    import("@/components/store/HeroCarousel").then((mod) => ({
+      default: mod.HeroCarousel,
+    })),
+  {
+    loading: () => (
+      <div
+        className="min-h-[36rem] animate-pulse bg-muted sm:min-h-[40rem]"
+        aria-hidden
+      />
+    ),
+  },
+);
 
 export async function Hero() {
   let slides: HeroSlide[] = [];

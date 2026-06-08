@@ -1,12 +1,4 @@
 @font-face {
-  font-family: "Pacifico";
-  src: url("/fonts/pacifico.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
   font-family: "Dancing Script";
   src: url("/fonts/dancing-script.woff2") format("woff2");
   font-weight: normal;
@@ -15,40 +7,24 @@
 }
 
 @font-face {
-  font-family: "Sacramento";
-  src: url("/fonts/sacramento.woff2") format("woff2");
+  font-family: "Caveat";
+  src: url("/fonts/caveat.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Satisfy";
-  src: url("/fonts/satisfy.woff2") format("woff2");
+  font-family: "Indie Flower";
+  src: url("/fonts/indie-flower.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Great Vibes";
-  src: url("/fonts/great-vibes.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Righteous";
-  src: url("/fonts/righteous.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Lobster";
-  src: url("/fonts/lobster.woff2") format("woff2");
+  font-family: "Rouge Script";
+  src: url("/fonts/rouge-script.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -71,13 +47,260 @@
 }
 
 @font-face {
-  font-family: "Courgette";
-  src: url("/fonts/courgette.woff2") format("woff2");
+  font-family: "Rock Salt";
+  src: url("/fonts/rock-salt.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Parisienne";
+  src: url("/fonts/parisienne.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shadows Into Light";
+  src: url("/fonts/shadows-into-light.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Mr Dafoe";
+  src: url("/fonts/mr-dafoe.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Euphoria Script";
+  src: url("/fonts/euphoria-script.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Splash";
+  src: url("/fonts/splash.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Passions Conflict";
+  src: url("/fonts/passions-conflict.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Corinthia";
+  src: url("/fonts/corinthia.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Qwigley";
+  src: url("/fonts/qwigley.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rochester";
+  src: url("/fonts/rochester.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ms Madi";
+  src: url("/fonts/ms-madi.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "The Nautigal";
+  src: url("/fonts/the-nautigal.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shizuru";
+  src: url("/fonts/shizuru.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Birthstone";
+  src: url("/fonts/birthstone.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Audiowide";
+  src: url("/fonts/audiowide.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("/fonts/montserrat.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src: url("/fonts/comic-neue.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/fonts/playfair-display.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("/fonts/bebas-neue.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Raleway";
+  src: url("/fonts/raleway.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Orbitron";
+  src: url("/fonts/orbitron.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Josefin Sans";
+  src: url("/fonts/josefin-sans.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nunito";
+  src: url("/fonts/nunito.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/jost.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Special Elite";
+  src: url("/fonts/special-elite.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/oswald.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkshire Swash";
+  src: url("/fonts/berkshire-swash.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bungee";
+  src: url("/fonts/bungee.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fredoka";
+  src: url("/fonts/fredoka.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cinzel";
+  src: url("/fonts/cinzel.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Exo 2";
+  src: url("/fonts/exo-2.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Black Ops One";
+  src: url("/fonts/black-ops-one.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -263,4 +486,14 @@
   body {
     @apply bg-background text-foreground font-sans antialiased transition-colors duration-200;
   }
+}
+
+@keyframes neon-rainbow {
+  0%   { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #ff007a, 0 0 8px #ff007a, 0 0 14px #ff007a80; }
+  16%  { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #ff6b00, 0 0 8px #ff6b00, 0 0 14px #ff6b0080; }
+  33%  { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #fcee0a, 0 0 8px #fcee0a, 0 0 14px #fcee0a80; }
+  50%  { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #00ff87, 0 0 8px #00ff87, 0 0 14px #00ff8780; }
+  66%  { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #00d4ff, 0 0 8px #00d4ff, 0 0 14px #00d4ff80; }
+  83%  { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #bd34fe, 0 0 8px #bd34fe, 0 0 14px #bd34fe80; }
+  100% { color: #fff; text-shadow: 0 0 2px #fff, 0 0 4px #ff007a, 0 0 8px #ff007a, 0 0 14px #ff007a80; }
 }

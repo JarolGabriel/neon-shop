@@ -25,6 +25,15 @@ import type { CustomDesignFormValues } from "@/lib/schemas/custom-design-form";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+/** En el navegador usa rutas relativas (mismo origen). En el servidor usa API_BASE si está definida. */
+function resolveApiUrl(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  if (typeof window !== "undefined" || !API_BASE) {
+    return normalized;
+  }
+  return `${API_BASE.replace(/\/$/, "")}${normalized}`;
+}
+
 const ACCESS_TOKEN_KEY = "access_token";
 const AUTH_USER_KEY = "auth_user";
 
@@ -142,7 +151,7 @@ export async function getCategoriesWithProductCounts(): Promise<
 }
 
 export async function getActivePromotions(): Promise<ActivePromotionsResponse> {
-  const res = await fetch(`${API_BASE}/api/promotions/active`, {
+  const res = await fetch(resolveApiUrl("/api/promotions/active"), {
     next: { revalidate: 60 },
   });
 
@@ -202,7 +211,7 @@ export async function getProductBySlug(
   slug: string,
 ): Promise<ProductDetail | null> {
   const res = await fetch(
-    `${API_BASE}/api/products/${encodeURIComponent(slug)}`,
+    resolveApiUrl(`/api/products/${encodeURIComponent(slug)}`),
     { next: { revalidate: 60 } },
   );
 
@@ -214,7 +223,7 @@ export async function getProductBySlug(
 }
 
 export async function getSiteSettings(): Promise<Record<string, string>> {
-  const res = await fetch(`${API_BASE}/api/settings`, {
+  const res = await fetch(resolveApiUrl("/api/settings"), {
     next: { revalidate: 300 },
   });
 
@@ -231,7 +240,9 @@ export async function getProductReviews(
   productId: string,
 ): Promise<ProductReview[]> {
   const res = await fetch(
-    `${API_BASE}/api/resenas?product_id=${encodeURIComponent(productId)}`,
+    resolveApiUrl(
+      `/api/resenas?product_id=${encodeURIComponent(productId)}`,
+    ),
     { cache: "no-store" },
   );
 
@@ -258,7 +269,7 @@ export async function createProductReview(
   formData.append("email", payload.email);
   if (file) formData.append("file", file);
 
-  const res = await fetch(`${API_BASE}/api/resenas`, {
+  const res = await fetch(resolveApiUrl("/api/resenas"), {
     method: "POST",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -344,7 +355,7 @@ export async function addToCart(payload: {
 }): Promise<void> {
   const token = getStoredAccessToken();
 
-  const res = await fetch(`${API_BASE}/api/cart`, {
+  const res = await fetch(resolveApiUrl("/api/cart"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

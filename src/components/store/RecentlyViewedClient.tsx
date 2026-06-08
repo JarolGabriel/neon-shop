@@ -7,7 +7,11 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { getProductsBySlugs } from "@/lib/api";
 import type { CatalogProduct } from "@/types/product";
 
-export function RecentlyViewedClient({ currentSlug }: { currentSlug: string }) {
+export function RecentlyViewedClient({
+  currentSlug,
+}: {
+  currentSlug?: string;
+}) {
   const { slugs, ready } = useRecentlyViewed(currentSlug);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);

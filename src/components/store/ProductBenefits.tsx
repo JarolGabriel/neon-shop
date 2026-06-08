@@ -7,7 +7,7 @@ interface Benefit {
 }
 
 const BENEFITS: Benefit[] = [
-  { icon: Lightbulb, label: "En el negocio desde 2014" },
+  { icon: Lightbulb, label: "En el negocio desde 2024" },
   { icon: Trophy, label: "Materiales de la mejor calidad" },
   { icon: Truck, label: "Envío exprés gratis en Venezuela" },
   { icon: ShieldCheck, label: "Garantía de 2 años" },

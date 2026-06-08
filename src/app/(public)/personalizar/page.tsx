@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
+import { CustomShowcaseCompare } from "@/components/store/CustomShowcaseCompare";
+import { HowItWorksSection } from "@/components/store/HowItWorksSection";
+import { ImageTestimonials } from "@/components/store/ImageTestimonials";
 import { NeonTextCustomizer } from "@/components/store/neon-customizer/NeonTextCustomizer";
+import { ProductTrustSection } from "@/components/store/ProductTrustSection";
+import { RecentlyViewedClient } from "@/components/store/RecentlyViewedClient";
 
 export const metadata: Metadata = {
   title: "Personaliza tu Letrero | Neon Shop",
@@ -8,5 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function PersonalizarPage() {
-  return <NeonTextCustomizer />;
+  return (
+    <>
+      <NeonTextCustomizer />
+      <CustomShowcaseCompare />
+      <HowItWorksSection />
+      <ImageTestimonials />
+      <RecentlyViewedClient />
+      <ProductTrustSection />
+    </>
+  );
 }
