@@ -17,7 +17,15 @@ export function useProductReviews(productId: string) {
       const data = await getProductReviews(productId);
       setReviews(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar reseñas");
+      if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setError(
+          "No pudimos cargar las reseñas. Comprueba tu conexión e inténtalo de nuevo.",
+        );
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Error al cargar reseñas",
+        );
+      }
     } finally {
       setIsLoading(false);
     }

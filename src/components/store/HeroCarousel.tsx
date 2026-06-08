@@ -1,9 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import {
+  getHeroCtaVariant,
+  HeroCtaButtons,
+} from "@/components/store/hero-cta-buttons";
 import { cn } from "@/lib/utils";
 import type { HeroSlide } from "@/types/promotion";
 
@@ -30,12 +32,10 @@ interface HeroCarouselProps {
 
 interface HeroSlideContentProps {
   slide: HeroSlide;
+  slideIndex: number;
 }
 
-const HERO_CTA_CLASS =
-  "rounded-full border-0 bg-vite-purple! px-6 text-white transition-colors duration-200 hover:bg-neon-pink!";
-
-function HeroSlideContent({ slide }: HeroSlideContentProps) {
+function HeroSlideContent({ slide, slideIndex }: HeroSlideContentProps) {
   return (
     <div className="relative flex h-full min-h-[36rem] w-full flex-col items-center justify-center px-4 pt-24 pb-16 sm:min-h-[40rem] sm:px-8">
       <div
@@ -58,13 +58,7 @@ function HeroSlideContent({ slide }: HeroSlideContentProps) {
         ) : null}
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button asChild size="lg" className={HERO_CTA_CLASS}>
-            <Link href="/diseno-personalizado">Sube tu logotipo o gráfico</Link>
-          </Button>
-
-          <Button asChild size="lg" className={HERO_CTA_CLASS}>
-            <Link href="/productos">encuentra tu diseno personalizado</Link>
-          </Button>
+          <HeroCtaButtons variant={getHeroCtaVariant(slideIndex)} />
         </div>
       </div>
     </div>
@@ -117,7 +111,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             transition={{ duration: 0.65, ease: [0.4, 0, 0.2, 1] }}
             className="absolute inset-0 w-full"
           >
-            <HeroSlideContent slide={activeSlide} />
+            <HeroSlideContent slide={activeSlide} slideIndex={activeIndex} />
           </motion.div>
         </AnimatePresence>
       </div>

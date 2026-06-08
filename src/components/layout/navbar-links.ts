@@ -14,7 +14,10 @@ export const STORE_NAV_ITEMS: NavItem[] = [
 
 export const CUSTOM_NAV_ITEMS: NavItem[] = [
   { label: "Subir logo/gráfico", href: "/diseno-personalizado" },
-  { label: "Diseño de texto", href: "/diseno-personalizado?tipo=texto" },
+  {
+    label: "Diseña tu letrero de neón",
+    href: "/personalizar",
+  },
 ];
 
 /** Enlaces del dropdown de navegación (Tienda y Carteles) */

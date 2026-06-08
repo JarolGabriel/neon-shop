@@ -3,88 +3,14 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  SHOWCASE_ALL_ITEMS,
+  SHOWCASE_CENTER_ITEMS,
+  SHOWCASE_LEFT_ITEMS,
+  SHOWCASE_RIGHT_ITEMS,
+  type ShowcaseGalleryItem,
+} from "@/components/store/showcase-gallery-data";
 import { cn } from "@/lib/utils";
-
-type ShowcaseBadge = "FEATURE" | "CUSTOM" | "PREMIUM" | "NEW" | "LIVE";
-
-interface ShowcaseItem {
-  id: string;
-  imageSrc: string;
-  alt: string;
-  badge: ShowcaseBadge;
-  gridClass?: string;
-  imageClass?: string;
-  quality?: number;
-  unoptimized?: boolean;
-  sizes?: string;
-}
-
-const LEFT_ITEMS: ShowcaseItem[] = [
-  {
-    id: "charleys",
-    imageSrc: "/images/gallery-charleys-steak.jpg",
-    alt: "Letrero de neón Charley's Steak",
-    badge: "FEATURE",
-    gridClass: "md:col-start-1 md:row-start-1",
-  },
-  {
-    id: "patron",
-    imageSrc: "/images/gallery-patron-neon.jpg",
-    alt: "Letrero de neón Patrón",
-    badge: "CUSTOM",
-    gridClass: "md:col-start-1 md:row-start-2",
-  },
-];
-
-const CENTER_STACK_ITEMS: ShowcaseItem[] = [
-  {
-    id: "open",
-    imageSrc: "/images/gallery-open.webp",
-    alt: 'Letrero de neón "Open"',
-    badge: "NEW",
-    imageClass: "object-cover object-center",
-    quality: 90,
-    sizes: "(max-width: 768px) 85vw, 400px",
-  },
-  {
-    id: "mikes",
-    imageSrc: "/images/gallery-mikes-honey.jpg",
-    alt: "Letrero de neón Mike's Hot Honey",
-    badge: "PREMIUM",
-  },
-  {
-    id: "play-game",
-    imageSrc: "/images/gallery-play-game.jpg",
-    alt: "Letrero de neón Play Game",
-    badge: "LIVE",
-    imageClass: "object-cover object-center",
-    quality: 100,
-    sizes: "(max-width: 768px) 85vw, 420px",
-  },
-];
-
-const RIGHT_ITEMS: ShowcaseItem[] = [
-  {
-    id: "volcan",
-    imageSrc: "/images/gallery-volcan-tequila.jpg",
-    alt: "Letrero de neón Volcán de mi Tierra",
-    badge: "CUSTOM",
-    gridClass: "md:col-start-3 md:row-start-1",
-  },
-  {
-    id: "bacardi",
-    imageSrc: "/images/gallery-bacardi-neon.jpg",
-    alt: "Letrero de neón Bacardi",
-    badge: "FEATURE",
-    gridClass: "md:col-start-3 md:row-start-2",
-  },
-];
-
-const MOBILE_SLIDER_ITEMS: ShowcaseItem[] = [
-  ...LEFT_ITEMS,
-  ...CENTER_STACK_ITEMS,
-  ...RIGHT_ITEMS,
-];
 
 const CARD_SHELL =
   "shadow-[-4px_8px_16px_-10px] shadow-neon-pink/10 transition-shadow duration-300 dark:shadow-cyber-yellow/10 md:hover:shadow-[-6px_12px_22px_-8px] md:hover:shadow-neon-pink/16 dark:md:hover:shadow-cyber-yellow/14";
@@ -97,7 +23,7 @@ const HOVER_MOTION = {
 };
 
 interface ShowcaseCardProps {
-  item: ShowcaseItem;
+  item: ShowcaseGalleryItem;
   variant?: "grid" | "compact" | "hero";
   className?: string;
 }
@@ -137,7 +63,7 @@ function ShowcaseCard({ item, variant = "grid", className }: ShowcaseCardProps) 
 }
 
 function CenterColumnStack() {
-  const [openBanner, mikes, playGame] = CENTER_STACK_ITEMS;
+  const [openBanner, mikes, playGame] = SHOWCASE_CENTER_ITEMS;
 
   return (
     <div className="flex h-full flex-col gap-4 md:col-start-2 md:row-span-2 md:row-start-1">
@@ -167,17 +93,17 @@ export function CustomShowcase() {
       </header>
 
       <div className="flex gap-4 overflow-x-auto px-4 pb-2 [perspective:1200px] snap-x snap-mandatory scrollbar-none md:hidden">
-        {MOBILE_SLIDER_ITEMS.map((item) => (
+        {SHOWCASE_ALL_ITEMS.map((item) => (
           <ShowcaseCard key={item.id} item={item} />
         ))}
       </div>
 
       <div className="hidden [perspective:1200px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] md:grid-rows-2 md:gap-4">
-        {LEFT_ITEMS.map((item) => (
+        {SHOWCASE_LEFT_ITEMS.map((item) => (
           <ShowcaseCard key={item.id} item={item} />
         ))}
         <CenterColumnStack />
-        {RIGHT_ITEMS.map((item) => (
+        {SHOWCASE_RIGHT_ITEMS.map((item) => (
           <ShowcaseCard key={item.id} item={item} />
         ))}
       </div>

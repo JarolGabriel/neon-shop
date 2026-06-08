@@ -22,7 +22,7 @@ export function CustomNavigationMenu() {
       >
         Carteles Personalizados
       </NavigationMenuTrigger>
-      <NavigationMenuContent className="bg-neon-surface left-0 z-50 mt-1.5 w-[260px] rounded-lg p-4 shadow-md ring-1 ring-foreground/10">
+      <NavigationMenuContent className="bg-neon-surface left-0 z-50 mt-1.5 w-[300px] rounded-lg p-4 shadow-md ring-1 ring-foreground/10">
         <ul className="flex flex-col">
           {CUSTOM_NAV_ITEMS.map((item) => (
             <li key={item.href}>
