@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { parseStoredProductColor } from "@/lib/product-catalog-options";
 import type { ProductDetail, ProductDetailVariant } from "@/types/product";
 
 export interface VariantColorOption {
@@ -31,6 +32,13 @@ function colorKeyOf(variant: ProductDetailVariant): string {
   );
 }
 
+function colorKeyFromNameAndHex(
+  color: string,
+  colorHex: string | null,
+): string {
+  return colorHex?.trim().toLowerCase() || color.trim().toLowerCase();
+}
+
 export function useProductVariants(
   product: ProductDetail,
 ): UseProductVariantsResult {
@@ -39,7 +47,38 @@ export function useProductVariants(
     [product.variants],
   );
 
+  const simpleProduct = useMemo(() => {
+    if (variants.length > 0) return null;
+
+    const parsed = parseStoredProductColor(product.color);
+    const size = product.size?.trim() || null;
+    const colorName = parsed.color || null;
+
+    if (!size && !colorName) return null;
+
+    const colorKey = colorName
+      ? colorKeyFromNameAndHex(colorName, parsed.colorHex)
+      : null;
+
+    return {
+      sizes: size ? [size] : [],
+      colors: colorName
+        ? [
+            {
+              key: colorKey!,
+              color: colorName,
+              colorHex: parsed.colorHex,
+            },
+          ]
+        : [],
+      initialSize: size,
+      initialColorKey: colorKey,
+    };
+  }, [variants.length, product.size, product.color]);
+
   const sizes = useMemo(() => {
+    if (simpleProduct) return simpleProduct.sizes;
+
     const seen = new Set<string>();
     const out: string[] = [];
     for (const v of variants) {
@@ -49,9 +88,11 @@ export function useProductVariants(
       }
     }
     return out;
-  }, [variants]);
+  }, [simpleProduct, variants]);
 
   const colors = useMemo<VariantColorOption[]>(() => {
+    if (simpleProduct) return simpleProduct.colors;
+
     const map = new Map<string, VariantColorOption>();
     for (const v of variants) {
       const key = colorKeyOf(v);
@@ -60,18 +101,19 @@ export function useProductVariants(
       }
     }
     return [...map.values()];
-  }, [variants]);
+  }, [simpleProduct, variants]);
 
-  const initial = useMemo(
-    () => variants.find((v) => v.price === product.price) ?? variants[0] ?? null,
-    [variants, product.price],
-  );
+  const initial = useMemo(() => {
+    if (simpleProduct) return null;
+    return variants.find((v) => v.price === product.price) ?? variants[0] ?? null;
+  }, [simpleProduct, variants, product.price]);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(
-    initial?.size ?? sizes[0] ?? null,
+    simpleProduct?.initialSize ?? initial?.size ?? sizes[0] ?? null,
   );
   const [selectedColorKey, setSelectedColorKey] = useState<string | null>(
-    initial ? colorKeyOf(initial) : (colors[0]?.key ?? null),
+    simpleProduct?.initialColorKey ??
+      (initial ? colorKeyOf(initial) : (colors[0]?.key ?? null)),
   );
 
   const findVariant = useCallback(
@@ -84,47 +126,55 @@ export function useProductVariants(
     [variants],
   );
 
-  const selectedVariant = useMemo(
-    () =>
+  const selectedVariant = useMemo(() => {
+    if (simpleProduct) return null;
+
+    return (
       findVariant(selectedSize, selectedColorKey) ??
       findVariant(null, selectedColorKey) ??
       findVariant(selectedSize, null) ??
       variants[0] ??
-      null,
-    [findVariant, selectedSize, selectedColorKey, variants],
-  );
+      null
+    );
+  }, [simpleProduct, findVariant, selectedSize, selectedColorKey, variants]);
 
-  // Si la combinación elegida no existe, saltamos a otra variante real disponible.
   const selectSize = useCallback(
     (size: string) => {
       setSelectedSize(size);
+      if (simpleProduct) return;
+
       if (!findVariant(size, selectedColorKey)) {
         const alt = variants.find((v) => v.size === size);
         if (alt) setSelectedColorKey(colorKeyOf(alt));
       }
     },
-    [findVariant, selectedColorKey, variants],
+    [simpleProduct, findVariant, selectedColorKey, variants],
   );
 
   const selectColor = useCallback(
     (key: string) => {
       setSelectedColorKey(key);
+      if (simpleProduct) return;
+
       if (!findVariant(selectedSize, key)) {
         const alt = variants.find((v) => colorKeyOf(v) === key);
         if (alt?.size) setSelectedSize(alt.size);
       }
     },
-    [findVariant, selectedSize, variants],
+    [simpleProduct, findVariant, selectedSize, variants],
   );
 
   const isSizeAvailable = useCallback(
-    (size: string) =>
-      variants.some(
+    (size: string) => {
+      if (simpleProduct) return simpleProduct.sizes.includes(size);
+
+      return variants.some(
         (v) =>
           v.size === size &&
           (selectedColorKey ? colorKeyOf(v) === selectedColorKey : true),
-      ),
-    [variants, selectedColorKey],
+      );
+    },
+    [simpleProduct, variants, selectedColorKey],
   );
 
   const selectedColorIndex = colors.findIndex(

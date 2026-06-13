@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Heart, LayoutDashboard, LogOut, Menu, User } from "lucide-react";
+import { toast } from "sonner";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 import { CUSTOM_NAV_ITEMS, NAV_ACTION_BTN } from "@/components/layout/navbar-links";
+import { COMMUNITY_PATH } from "@/lib/community-routes";
+import { useAuth } from "@/context/AuthContext";
 import { useCategories } from "@/hooks/useCategories";
+import { getUserFullName } from "@/lib/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,18 +18,27 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AuthUser } from "@/types/auth";
 
 interface NavbarMobileMenuProps {
   isAuthenticated: boolean;
-  userName: string | null;
+  user: AuthUser | null;
 }
 
 export function NavbarMobileMenu({
   isAuthenticated,
-  userName,
+  user,
 }: NavbarMobileMenuProps) {
+  const router = useRouter();
+  const { signOut } = useAuth();
+
+  const handleSignOut = () => {
+    signOut();
+    toast.success("Sesión cerrada");
+    router.push("/");
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -56,19 +72,76 @@ export function NavbarMobileMenu({
             <Link href="/quienes-somos" className="nav-link">
               Quiénes somos
             </Link>
-            <Link href="/showroom" className="nav-link">
-              Showroom
+            <Link href={COMMUNITY_PATH} className="nav-link">
+              Comunidad
             </Link>
           </div>
 
           <div className="border-t border-border/50 pt-4">
-            {isAuthenticated ? (
-              <p className="text-sm text-muted-foreground">
-                Hola,{" "}
-                <span className="text-neon-pink dark:text-cyber-yellow">
-                  {userName}
-                </span>
-              </p>
+            {isAuthenticated && user ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <UserAvatar
+                    user={user}
+                    useNextImageForUpload={false}
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate font-heading text-sm font-semibold text-foreground">
+                      {getUserFullName(user)}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    NAV_ACTION_BTN,
+                    "justify-start text-neon-pink dark:text-cyber-yellow",
+                  )}
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="size-4" />
+                  Cerrar sesión
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className={cn(NAV_ACTION_BTN, "justify-start")}
+                  asChild
+                >
+                  <Link href="/perfil">
+                    <User className="size-4" />
+                    Mi perfil
+                  </Link>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className={cn(NAV_ACTION_BTN, "justify-start")}
+                  asChild
+                >
+                  <Link href="/favoritos">
+                    <Heart className="size-4" />
+                    Favoritos
+                  </Link>
+                </Button>
+
+                {user.role === "admin" ? (
+                  <Button
+                    variant="ghost"
+                    className={cn(NAV_ACTION_BTN, "justify-start")}
+                    asChild
+                  >
+                    <Link href="/admin">
+                      <LayoutDashboard className="size-4" />
+                      Panel admin
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <Button

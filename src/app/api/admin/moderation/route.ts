@@ -1,47 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  SHOWROOM_STORAGE_BUCKET,
+  extractShowroomStoragePath,
+} from "@/lib/showroom-storage";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+const REVIEW_SELECT = `
+  id,
+  title,
+  comment,
+  image_url,
+  rating,
+  created_at,
+  profiles (id, first_name, last_name, email)
+`;
+
+const COMMENT_SELECT = `
+  id,
+  comment,
+  created_at,
+  review_id,
+  profiles (id, first_name, last_name, email)
+`;
+
+async function deleteReviewImage(imageUrl: string | null) {
+  const storagePath = extractShowroomStoragePath(imageUrl);
+  if (!storagePath) return;
+  await supabaseAdmin.storage.from(SHOWROOM_STORAGE_BUCKET).remove([storagePath]);
+}
+
 /**
- * GET /api/admin/moderation
- * Trae TODO lo que está pendiente de aprobación (Reviews y Comentarios)
- * ACCESO GARANTIZADO POR MIDDLEWARE
+ * GET /api/admin/moderation?view=pending|published
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // 1. Traer reseñas pendientes de aprobación
-    const { data: pendingReviews, error: errReviews } = await supabaseAdmin
+    const view = request.nextUrl.searchParams.get("view");
+    const isPublished = view === "published";
+
+    let reviewsQuery = supabaseAdmin
       .from("customer_reviews")
-      .select(
-        `
-        id,
-        title,
-        comment,
-        image_url,
-        rating,
-        created_at,
-        profiles (id, first_name, last_name, email)
-      `,
-      )
-      .eq("is_approved", false);
+      .select(REVIEW_SELECT)
+      .eq("is_approved", isPublished);
+
+    if (isPublished) {
+      reviewsQuery = reviewsQuery
+        .order("created_at", { ascending: false })
+        .limit(50);
+    }
+
+    const { data: reviews, error: errReviews } = await reviewsQuery;
 
     if (errReviews) throw errReviews;
 
-    // 2. Traer comentarios pendientes de aprobación
-    const { data: pendingComments, error: errComments } = await supabaseAdmin
+    let commentsQuery = supabaseAdmin
       .from("review_comments")
-      .select(
-        `
-        id,
-        comment,
-        created_at,
-        profiles (id, first_name, last_name, email)
-      `,
-      )
-      .eq("is_approved", false);
+      .select(COMMENT_SELECT)
+      .eq("is_approved", isPublished);
+
+    if (isPublished) {
+      commentsQuery = commentsQuery
+        .order("created_at", { ascending: false })
+        .limit(50);
+    }
+
+    const { data: comments, error: errComments } = await commentsQuery;
 
     if (errComments) throw errComments;
 
@@ -49,8 +75,8 @@ export async function GET() {
       {
         success: true,
         data: {
-          reviews: pendingReviews,
-          comments: pendingComments,
+          reviews: reviews ?? [],
+          comments: comments ?? [],
         },
       },
       { status: 200 },
@@ -66,8 +92,7 @@ export async function GET() {
 
 /**
  * PATCH /api/admin/moderation
- * Aprueba o elimina un contenido (Review o Comentario)
- * ACCESO GARANTIZADO POR MIDDLEWARE
+ * approve | reject (pendientes) | delete (cualquier estado)
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -84,7 +109,6 @@ export async function PATCH(request: NextRequest) {
     const tableName =
       target_type === "review" ? "customer_reviews" : "review_comments";
 
-    // CASO 1: El administrador decide APROBAR el contenido
     if (action === "approve") {
       const { data, error: updateError } = await supabaseAdmin
         .from(tableName)
@@ -94,7 +118,6 @@ export async function PATCH(request: NextRequest) {
 
       if (updateError) throw updateError;
 
-      // Si data viene vacío, significa que el ID no existía
       if (!data || data.length === 0) {
         return NextResponse.json(
           {
@@ -108,14 +131,25 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          message: `El contenido ha sido aprobado y ya es público.`,
+          message: "El contenido ha sido aprobado y ya es público.",
         },
         { status: 200 },
       );
     }
 
-    // CASO 2: El administrador decide RECHAZAR (Eliminar contenido inapropiado)
-    if (action === "reject") {
+    if (action === "reject" || action === "delete") {
+      if (target_type === "review") {
+        const { data: review } = await supabaseAdmin
+          .from("customer_reviews")
+          .select("image_url")
+          .eq("id", target_id)
+          .maybeSingle();
+
+        if (review?.image_url) {
+          await deleteReviewImage(review.image_url);
+        }
+      }
+
       const { data, error: deleteError } = await supabaseAdmin
         .from(tableName)
         .delete()
@@ -124,7 +158,6 @@ export async function PATCH(request: NextRequest) {
 
       if (deleteError) throw deleteError;
 
-      // Si data viene vacío, el ID ya no existía en la base de datos
       if (!data || data.length === 0) {
         return NextResponse.json(
           {
@@ -135,17 +168,16 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      return NextResponse.json(
-        {
-          success: true,
-          message: `El contenido ha sido rechazado y eliminado.`,
-        },
-        { status: 200 },
-      );
+      const message =
+        action === "delete"
+          ? "Contenido eliminado"
+          : "El contenido ha sido rechazado y eliminado.";
+
+      return NextResponse.json({ success: true, message }, { status: 200 });
     }
 
     return NextResponse.json(
-      { error: "Acción inválida. Use 'approve' o 'reject'." },
+      { error: "Acción inválida. Use 'approve', 'reject' o 'delete'." },
       { status: 400 },
     );
   } catch (error: unknown) {

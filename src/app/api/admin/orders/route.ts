@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         delivery_city,
         total_usd,
         status,
+        admin_notes,
         created_at,
         order_items (
           id,

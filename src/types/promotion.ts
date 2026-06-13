@@ -19,3 +19,16 @@ export interface HeroSlide {
 }
 
 export const HOME_HERO_LOCATION = "home_hero" as const;
+/** Nuevas promos admin — ubicación móvil de la comunidad. */
+export const COMMUNITY_MOBILE_LOCATION = "comunidad_mobile" as const;
+/** Legacy en Supabase — sigue soportado en el mapper. */
+export const SHOWROOM_MOBILE_LOCATION = "showroom_mobile" as const;
+
+export interface ShowroomPromoCard {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  href: string;
+  linkText: string;
+}

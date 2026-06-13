@@ -153,9 +153,6 @@ export const RGB_CYCLE = [
 
 export type NeonColor = (typeof NEON_COLORS)[number];
 
-export const WHATSAPP_NUMBER =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "584121234567";
-
 export function getFontSize(size: string): string {
   return (
     {

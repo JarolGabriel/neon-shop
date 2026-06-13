@@ -43,3 +43,39 @@ export interface CreateOrderPayload {
   delivery_address: string;
   delivery_city: string;
 }
+
+export interface OrderHistoryItem {
+  id: string;
+  product_name: string;
+  quantity: number;
+  price_usd: number;
+  notes: string | null;
+}
+
+export interface OrderHistoryEntry {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  delivery_address: string;
+  delivery_city: string;
+  total_usd: number;
+  status: OrderStatus;
+  created_at: string;
+  order_items: OrderHistoryItem[];
+}
+
+export interface MyOrdersResponse {
+  success: boolean;
+  count: number;
+  data: OrderHistoryEntry[];
+}
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pendiente_pago: "Pendiente de pago",
+  pago_confirmado: "Pago confirmado",
+  en_taller: "En taller",
+  enviado: "Enviado",
+  entregado: "Entregado",
+  cancelado: "Cancelado",
+};

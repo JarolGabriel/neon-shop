@@ -2,6 +2,7 @@
 
 import { Box, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { ProductCustomizationNote } from "@/components/store/ProductCustomizationNote";
 import { ProductAccordion } from "@/components/store/ProductAccordion";
 import { ProductBenefits } from "@/components/store/ProductBenefits";
 import { BulkDiscountNotice } from "@/components/store/BulkDiscountNotice";
@@ -12,6 +13,9 @@ import { ProductVariantSelector } from "@/components/store/ProductVariantSelecto
 import { PRODUCT_ACCORDION_ITEMS } from "@/components/store/product-accordion-data";
 import { Button } from "@/components/ui/button";
 import { addToCart, getCartSessionId } from "@/lib/api";
+import { parseCartNotes } from "@/lib/schemas/cart-notes";
+import { LOW_STOCK_THRESHOLD } from "@/lib/stock-utils";
+import { useCart } from "@/context/CartContext";
 import {
   cn,
   formatSizeLabel,
@@ -37,23 +41,57 @@ export function ProductInfo({
   onSelectColor,
 }: ProductInfoProps) {
   const [cartState, setCartState] = useState<CartState>("idle");
+  const [customizationNote, setCustomizationNote] = useState("");
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const { fetchCart } = useCart();
 
-  const { currentPrice, selectedVariant, colors, selectedColorKey } = selection;
+  const {
+    currentPrice,
+    selectedVariant,
+    selectedSize,
+    colors,
+    selectedColorKey,
+    variants,
+  } = selection;
+  const hasVariants = variants.length > 0;
   const compareAt = product.compare_at_price;
   const discount = getDiscountPercent(currentPrice, compareAt);
   const selectedColorName =
     colors.find((c) => c.key === selectedColorKey)?.color ?? null;
+  const availableStock = hasVariants
+    ? (selectedVariant?.stock ?? 0)
+    : (product.stock ?? 0);
+  const isOutOfStock = availableStock <= 0;
+  const isLowStock =
+    availableStock > 0 && availableStock <= LOW_STOCK_THRESHOLD;
+  const canAddToCart =
+    !isOutOfStock && (!hasVariants || selectedVariant !== null);
 
   const handleAddToCart = async () => {
-    if (!selectedVariant) return;
+    if (!canAddToCart) return;
+
+    setNoteError(null);
+    let notes: string | undefined;
+    try {
+      notes = parseCartNotes(customizationNote);
+    } catch (error) {
+      setNoteError(
+        error instanceof Error ? error.message : "Nota inválida",
+      );
+      return;
+    }
+
     setCartState("loading");
     try {
       await addToCart({
         session_id: getCartSessionId(),
         product_id: product.id,
-        variant_id: selectedVariant.id,
+        ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
         quantity: 1,
+        notes,
       });
+      await fetchCart();
+      setCustomizationNote("");
       setCartState("success");
     } catch {
       setCartState("error");
@@ -62,8 +100,9 @@ export function ProductInfo({
 
   const handleWhatsApp = () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
+    const sizeValue = selectedVariant?.size ?? selectedSize;
     const details = [
-      selectedVariant?.size ? formatSizeLabel(selectedVariant.size) : null,
+      sizeValue ? formatSizeLabel(sizeValue) : null,
       selectedColorName,
     ]
       .filter(Boolean)
@@ -120,11 +159,33 @@ export function ProductInfo({
 
       <BulkDiscountNotice />
 
+      {isOutOfStock ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {hasVariants
+            ? "Esta variante está agotada. Elige otro tamaño o color."
+            : "Este producto está agotado."}
+        </p>
+      ) : isLowStock ? (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-foreground">
+          ¡Quedan pocas unidades! ({availableStock} disponibles)
+        </p>
+      ) : null}
+
+      <ProductCustomizationNote
+        value={customizationNote}
+        onChange={(value) => {
+          setCustomizationNote(value);
+          if (noteError) setNoteError(null);
+        }}
+        disabled={cartState === "loading"}
+        error={noteError}
+      />
+
       <div className="flex flex-col gap-3">
         <Button
           size="lg"
           onClick={handleAddToCart}
-          disabled={cartState === "loading" || !selectedVariant}
+          disabled={cartState === "loading" || !canAddToCart}
           className="w-full rounded-full border-0 bg-vite-purple! text-white transition-colors duration-200 hover:bg-neon-pink! disabled:opacity-70"
         >
           {cartState === "loading" ? (

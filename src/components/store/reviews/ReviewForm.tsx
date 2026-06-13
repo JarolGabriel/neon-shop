@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Upload, X } from "lucide-react";
+import { Upload, X, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@/components/ui/dialog";
 import { Form, FormField, FormItem } from "@/components/ui/form";
@@ -20,6 +20,7 @@ import {
   type ReviewFormValues,
 } from "@/lib/schemas/review";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { StarRating } from "./StarRating";
 
 export type { ReviewFormValues };
@@ -29,6 +30,16 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 interface ReviewFormProps {
   onSubmit: (values: ReviewFormValues, file?: File | null) => Promise<void>;
+  isOpen?: boolean;
+}
+
+function getDisplayName(
+  firstName: string | null,
+  lastName: string | null,
+  email: string,
+): string {
+  const parts = [firstName, lastName].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : (email.split("@")[0] ?? email);
 }
 
 function validateImageFile(file: File): string | null {
@@ -41,10 +52,11 @@ function validateImageFile(file: File): string | null {
   return null;
 }
 
-export function ReviewForm({ onSubmit }: ReviewFormProps) {
+export function ReviewForm({ onSubmit, isOpen = true }: ReviewFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
@@ -58,6 +70,36 @@ export function ReviewForm({ onSubmit }: ReviewFormProps) {
     mode: "onSubmit",
     reValidateMode: "onSubmit",
   });
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    clearFile();
+
+    if (isAuthenticated && user) {
+      form.reset({
+        rating: 0,
+        title: "",
+        content: "",
+        user_name: getDisplayName(user.first_name, user.last_name, user.email),
+        email: user.email,
+      });
+      return;
+    }
+
+    form.reset({
+      rating: 0,
+      title: "",
+      content: "",
+      user_name: "",
+      email: "",
+    });
+  }, [isOpen, isAuthenticated, user, form]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -82,11 +124,6 @@ export function ReviewForm({ onSubmit }: ReviewFormProps) {
     }
 
     setSelectedFile(file);
-  };
-
-  const clearFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleFormSubmit = async (values: ReviewFormValues) => {
@@ -223,11 +260,23 @@ export function ReviewForm({ onSubmit }: ReviewFormProps) {
               <Input
                 type="email"
                 placeholder="Tu dirección de correo electrónico"
+                readOnly={isAuthenticated}
+                className={cn(isAuthenticated && "text-muted-foreground")}
                 {...field}
               />
             </FormItem>
           )}
         />
+
+        {isAuthenticated ? (
+          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+            <BadgeCheck
+              className="size-3.5 shrink-0 text-neon-pink dark:text-cyber-yellow"
+              aria-hidden
+            />
+            Tu reseña aparecerá con la etiqueta Verificado
+          </p>
+        ) : null}
 
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
           <DialogClose asChild>

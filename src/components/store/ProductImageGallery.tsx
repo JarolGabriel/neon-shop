@@ -5,12 +5,14 @@ import { ChevronLeft, ChevronRight, Loader2, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { FavoriteButton } from "@/components/store/FavoriteButton";
 import { cn } from "@/lib/utils";
 import type { CatalogProductImage } from "@/types/product";
 
 interface ProductImageGalleryProps {
   images: CatalogProductImage[];
   productName: string;
+  productId?: string;
   discountPercent: number | null;
   href?: string;
 }
@@ -28,6 +30,7 @@ const navButtonClass = cn(
 export function ProductImageGallery({
   images,
   productName,
+  productId,
   discountPercent,
   href,
 }: ProductImageGalleryProps) {
@@ -67,9 +70,11 @@ export function ProductImageGallery({
 
   return (
     <div className="group/gallery relative aspect-square w-full overflow-hidden bg-muted">
+      {productId ? <FavoriteButton productId={productId} size="sm" /> : null}
+
       {discountPercent != null ? (
         <div
-          className="absolute inset-x-0 top-0 z-20 flex items-center gap-1.5 bg-neon-pink/90 px-2 py-1 text-[10px] font-medium text-primary-foreground backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5 sm:text-xs"
+          className="absolute inset-x-0 top-0 z-20 flex items-center gap-1.5 bg-neon-pink/90 px-2 py-1 pr-10 text-[10px] font-medium text-primary-foreground backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5 sm:pr-12 sm:text-xs"
           aria-label={`Hasta un ${discountPercent}% de descuento`}
         >
           <Tag className="size-3 shrink-0 sm:size-3.5" aria-hidden="true" />

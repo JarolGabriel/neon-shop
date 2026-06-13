@@ -31,6 +31,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       <ProductImageGallery
         images={images}
         productName={product.name}
+        productId={product.id}
         discountPercent={discountPercent}
         href={`/productos/${product.slug}`}
       />

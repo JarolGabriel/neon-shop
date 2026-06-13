@@ -9,6 +9,27 @@ export interface AuthUser {
   role: UserRole;
   first_name: string | null;
   last_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+}
+
+export interface ShippingAddress {
+  street: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}
+
+export interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  avatar_url: string | null;
+  shipping_address: ShippingAddress | null;
+  role: UserRole;
 }
 
 /** Tokens de sesión devueltos por el backend */

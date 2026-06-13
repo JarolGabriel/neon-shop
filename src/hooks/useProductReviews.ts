@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createProductReview, getProductReviews } from "@/lib/api";
 import { computeReviewStats } from "@/components/store/reviews/reviewStats";
+import { useAuth } from "@/context/AuthContext";
 import type { CreateReviewPayload, ProductReview } from "@/types/review";
 
 export function useProductReviews(productId: string) {
+  const { accessToken } = useAuth();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +45,12 @@ export function useProductReviews(productId: string) {
       const created = await createProductReview(
         { ...payload, product_id: productId },
         file,
+        accessToken,
       );
       setReviews((prev) => [created, ...prev]);
       return created;
     },
-    [productId],
+    [productId, accessToken],
   );
 
   const stats = useMemo(() => computeReviewStats(reviews), [reviews]);

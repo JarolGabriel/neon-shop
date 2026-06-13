@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { getProducts } from "@/lib/api";
 import type { CatalogProduct, CatalogProductsMeta } from "@/types/product";
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 12;
 
-const GRID_CLASS =
-  "grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3";
+const GRID_CLASS = "grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3";
 
 export function ProductGrid() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -39,8 +38,12 @@ export function ProductGrid() {
       );
       setMeta(response.meta);
       setPage(targetPage);
-    } catch {
-      setError("No pudimos cargar los productos. Intenta de nuevo.");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "No pudimos cargar los productos. Intenta de nuevo.";
+      setError(message);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -79,7 +82,7 @@ export function ProductGrid() {
               </ul>
             ) : error && products.length === 0 ? (
               <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <p className="text-muted-foreground">{error}</p>
+                <p className="max-w-md text-muted-foreground">{error}</p>
                 <Button
                   variant="outline"
                   className="border-border"

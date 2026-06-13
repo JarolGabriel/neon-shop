@@ -4,12 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 interface VariantUpdateInput {
-  id?: string; // Si viene, se actualiza. Si no, se crea.
+  id?: string;
   name: string;
   sku: string;
   price?: number;
   stock?: number;
   is_active?: boolean;
+  size?: string;
+  color?: string;
+  color_hex?: string;
+}
+
+function sanitizeColorHex(hex: unknown): string | null {
+  if (typeof hex !== "string" || !hex.trim()) return null;
+  const normalized = hex.trim();
+  return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : null;
 }
 
 /**
@@ -143,6 +152,9 @@ export async function PUT(
           price: v.price ?? basePrice,
           stock: v.stock ?? 0,
           is_active: v.is_active ?? true,
+          size: v.size ?? null,
+          color: v.color ?? null,
+          color_hex: sanitizeColorHex(v.color_hex),
         }));
 
       const updates = incomingVariants.filter((v) => v.id);
@@ -175,6 +187,9 @@ export async function PUT(
             price: variant.price ?? basePrice,
             stock: variant.stock ?? 0,
             is_active: variant.is_active ?? true,
+            size: variant.size ?? null,
+            color: variant.color ?? null,
+            color_hex: sanitizeColorHex(variant.color_hex),
           })
           .eq("id", variant.id)
           .eq("product_id", id); // Validación de seguridad: que pertenezca al producto

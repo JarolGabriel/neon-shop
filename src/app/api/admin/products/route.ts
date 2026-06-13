@@ -10,6 +10,15 @@ interface VariantInput {
   price?: number;
   stock?: number;
   is_active?: boolean;
+  size?: string;
+  color?: string;
+  color_hex?: string;
+}
+
+function sanitizeColorHex(hex: unknown): string | null {
+  if (typeof hex !== "string" || !hex.trim()) return null;
+  const normalized = hex.trim();
+  return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : null;
 }
 
 // --- GET: Listar productos con filtros, paginación y variantes ---
@@ -270,9 +279,12 @@ export async function POST(request: NextRequest) {
         product_id: productData.id,
         name: v.name,
         sku: v.sku,
-        price: v.price ?? price, // Si la variante no tiene precio propio, hereda el del producto
+        price: v.price ?? price,
         stock: v.stock ?? 0,
         is_active: v.is_active ?? true,
+        size: v.size ?? null,
+        color: v.color ?? null,
+        color_hex: sanitizeColorHex(v.color_hex),
       }));
 
       const { data: variantsData, error: variantsError } = await supabaseAdmin

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState, type MouseEvent } from "react";
+import { FavoriteButton } from "@/components/store/FavoriteButton";
 import { cn } from "@/lib/utils";
 import type { ProductDetailImage } from "@/types/product";
 
@@ -12,6 +13,7 @@ const ZOOM_SCALE = 2;
 interface ProductDetailGalleryProps {
   images: ProductDetailImage[];
   productName: string;
+  productId: string;
   activeIndex: number;
   onActiveIndexChange: (index: number) => void;
 }
@@ -27,6 +29,7 @@ const navButtonClass = cn(
 export function ProductDetailGallery({
   images,
   productName,
+  productId,
   activeIndex,
   onActiveIndexChange,
 }: ProductDetailGalleryProps) {
@@ -79,6 +82,8 @@ export function ProductDetailGallery({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsZooming(false)}
       >
+        <FavoriteButton productId={productId} />
+
         {images.map((img, index) => {
           const active = index === activeIndex;
           return (

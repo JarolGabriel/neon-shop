@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { getProductSizeLabel } from "@/lib/product-catalog-options"
 import type {
   CatalogProduct,
   CatalogProductVariant,
@@ -23,9 +24,12 @@ const SIZE_NAME_MAP: Record<string, string> = {
   large: "Grande",
 }
 
-/** Traduce el nombre del tamaño al español y convierte pulgadas a centímetros. */
+/** Traduce presets del taller, tamaños custom y pulgadas legacy. */
 export function formatSizeLabel(size: string | null): string {
   if (!size) return ""
+
+  const presetLabel = getProductSizeLabel(size)
+  if (presetLabel !== size) return presetLabel
 
   let label = size
   const lower = size.toLowerCase()
@@ -114,4 +118,17 @@ export function sortProductImages(
     if (!a.is_primary && b.is_primary) return 1
     return 0
   })
+}
+
+/** Genera slug kebab-case desde un nombre (sin acentos). */
+export function slugifyName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
 }

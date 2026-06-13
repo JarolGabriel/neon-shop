@@ -1,11 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search } from "lucide-react";
+import { CartNavButton } from "@/components/layout/CartNavButton";
+import { FavoritesNavButton } from "@/components/layout/FavoritesNavButton";
+import { SearchDialog } from "@/components/layout/SearchDialog";
 import { NAV_ACTION_BTN, NAVBAR_PILL_CLASS } from "@/components/layout/navbar-links";
 import { CustomNavigationMenu } from "@/components/layout/custom-navigation-menu";
+import { NavGuestMenu } from "@/components/layout/NavGuestMenu";
+import { NavUserMenu } from "@/components/layout/NavUserMenu";
+import { NavUserSkeleton } from "@/components/layout/NavUserSkeleton";
 import { NavbarMobileMenu } from "@/components/layout/navbar-mobile-menu";
 import { StoreNavigationMenu } from "@/components/layout/store-navigation-menu";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -16,17 +23,24 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import { COMMUNITY_PATH } from "@/lib/community-routes";
 import { useAuth } from "@/context/AuthContext";
 import { useNavbarHidden } from "@/hooks/useScrollDirection";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const userName = user?.first_name ?? user?.email?.split("@")[0] ?? null;
   const isHidden = useNavbarHidden();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
-    <motion.header
+    <>
+      <SearchDialog
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
+
+      <motion.header
       className="sticky top-0 z-50 w-full px-4 pt-4 sm:px-6"
       animate={{ y: isHidden ? "-120%" : "0%" }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
@@ -62,8 +76,8 @@ export function Navbar() {
 
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link href="/showroom" className="nav-link text-foreground">
-                    Showroom
+                  <Link href={COMMUNITY_PATH} className="nav-link text-foreground">
+                    Comunidad
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -76,71 +90,33 @@ export function Navbar() {
               size="icon"
               aria-label="Buscar"
               className={cn(NAV_ACTION_BTN, "text-foreground")}
+              onClick={() => setIsSearchOpen(true)}
             >
               <Search className="size-4" />
             </Button>
 
-            {!isLoading && (
-              <>
-                {isAuthenticated ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hidden rounded-full text-neon-pink sm:inline-flex dark:text-cyber-yellow"
-                  >
-                    {userName}
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        NAV_ACTION_BTN,
-                        "hidden sm:inline-flex text-foreground",
-                      )}
-                      asChild
-                    >
-                      <Link href="/auth/login">Login</Link>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        NAV_ACTION_BTN,
-                        "hidden sm:inline-flex text-foreground",
-                      )}
-                      asChild
-                    >
-                      <Link href="/auth/registro">Registro</Link>
-                    </Button>
-                  </>
-                )}
-              </>
+            {isLoading ? (
+              <NavUserSkeleton />
+            ) : isAuthenticated ? (
+              <NavUserMenu />
+            ) : (
+              <NavGuestMenu />
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Carrito"
-              className={cn(NAV_ACTION_BTN, "text-foreground")}
-              asChild
-            >
-              <Link href="/checkout">
-                <ShoppingCart className="size-4" />
-              </Link>
-            </Button>
+            <FavoritesNavButton />
+            <CartNavButton />
 
             <ThemeToggle />
 
             <NavbarMobileMenu
               isAuthenticated={isAuthenticated}
-              userName={userName}
+              user={user}
             />
           </div>
         </nav>
       </div>
     </motion.header>
+    </>
   );
 }
 

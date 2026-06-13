@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+import { getAuthUserFromToken, supabaseAdmin } from "@/lib/supabase";
 
 /**
  * GET /api/showroom/comments?review_id=UUID
@@ -72,12 +68,9 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
+    const user = await getAuthUserFromToken(token);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Sesión inválida o expirada." },
         { status: 401 },
@@ -114,7 +107,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Comentario publicado con éxito.",
+        message:
+          "Tu comentario fue enviado y está pendiente de revisión por el equipo.",
         data: newComment,
       },
       { status: 201 },

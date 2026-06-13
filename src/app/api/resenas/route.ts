@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getAuthUserFromToken, supabaseAdmin } from "@/lib/supabase";
 
 const TABLE = "product_reviews";
 const STORAGE_BUCKET = "product_images";
@@ -98,17 +98,17 @@ export async function POST(request: NextRequest) {
   let uploadedPath: string | null = null;
 
   try {
-    let verifiedUserId: string | null = null;
     const authHeader = request.headers.get("authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1];
-      const {
-        data: { user },
-      } = await supabaseAdmin.auth.getUser(token);
-      if (user) verifiedUserId = user.id;
-    }
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
 
-    const formData = await request.formData();
+    const [formData, authUser] = await Promise.all([
+      request.formData(),
+      getAuthUserFromToken(token),
+    ]);
+
+    const verifiedUserId = authUser?.id ?? null;
     const product_id = formData.get("product_id") as string | null;
     const ratingRaw = formData.get("rating");
     const title = formData.get("title") as string | null;
@@ -153,20 +153,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: product, error: productError } = await supabaseAdmin
-      .from("products")
-      .select("id")
-      .eq("id", product_id)
-      .maybeSingle();
-
-    if (productError) throw productError;
-    if (!product) {
-      return NextResponse.json(
-        { error: "El producto indicado no existe." },
-        { status: 404 },
-      );
-    }
-
     let mediaUrl: string | null = null;
 
     if (file && file.size > 0) {
@@ -204,6 +190,14 @@ export async function POST(request: NextRequest) {
       if (uploadedPath) {
         await supabaseAdmin.storage.from(STORAGE_BUCKET).remove([uploadedPath]);
       }
+
+      if (insertError.code === "23503") {
+        return NextResponse.json(
+          { error: "El producto indicado no existe." },
+          { status: 404 },
+        );
+      }
+
       throw insertError;
     }
 

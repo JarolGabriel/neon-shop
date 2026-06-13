@@ -64,6 +64,7 @@ export function ProductDetailView({
           <ProductDetailGallery
             images={images}
             productName={product.name}
+            productId={product.id}
             activeIndex={activeImage}
             onActiveIndexChange={setActiveImage}
           />

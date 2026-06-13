@@ -1,8 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
+import { supabaseAdmin, supabaseAnonServer } from "@/lib/supabase";
+import type { UserRole } from "@/types/auth";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+function resolveUserRole(email: string): UserRole {
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
+  return adminEmails.includes(email.toLowerCase()) ? "admin" : "customer";
+}
+
+async function ensureUserProfile(user: User) {
+  const { data: existingProfile, error: lookupError } = await supabaseAdmin
+    .from("profiles")
+    .select("role, first_name, last_name, avatar_url, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (lookupError) throw lookupError;
+  if (existingProfile) return existingProfile;
+
+  const email = user.email?.trim().toLowerCase() ?? "";
+  const role = resolveUserRole(email);
+
+  const { data: createdProfile, error: createError } = await supabaseAdmin
+    .from("profiles")
+    .insert({
+      id: user.id,
+      email,
+      first_name:
+        typeof user.user_metadata?.first_name === "string"
+          ? user.user_metadata.first_name
+          : "",
+      last_name:
+        typeof user.user_metadata?.last_name === "string"
+          ? user.user_metadata.last_name
+          : "",
+      role,
+    })
+    .select("role, first_name, last_name, avatar_url, phone")
+    .single();
+
+  if (createError || !createdProfile) throw createError;
+
+  return createdProfile;
+}
 
 /**
  * POST /api/auth/sign-in
@@ -11,7 +55,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -20,14 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Instancia 1: Cliente exclusivo para interactuar con el sistema Auth
-    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
-
-    // Intercambiar credenciales por una sesión válida en Supabase Auth
     const { data: authData, error: authError } =
-      await supabaseAuth.auth.signInWithPassword({
+      await supabaseAnonServer.auth.signInWithPassword({
         email,
         password,
       });
@@ -39,24 +78,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Instancia 2: Cliente limpio forzado al esquema 'public' para leer la tabla
-    const supabaseDatabase = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: "public" },
-    });
+    if (!authData.session?.access_token) {
+      return NextResponse.json(
+        { error: "No se pudo crear la sesión. Intenta de nuevo." },
+        { status: 500 },
+      );
+    }
 
-    // Buscar el rol del usuario en nuestra tabla de perfiles públicos
-    const { data: profile, error: profileError } = await supabaseDatabase
-      .from("profiles")
-      .select("role, first_name, last_name")
-      .eq("id", authData.user.id)
-      .single();
+    let profile;
 
-    if (profileError || !profile) {
-      console.error("Error detallado de base de datos:", profileError);
+    try {
+      profile = await ensureUserProfile(authData.user);
+    } catch (profileError) {
+      console.error("Error al resolver perfil de usuario:", profileError);
 
       return NextResponse.json(
-        { error: "Perfil de usuario no encontrado en la base de datos" },
-        { status: 404 },
+        { error: "No se pudo cargar el perfil del usuario." },
+        { status: 500 },
       );
     }
 
@@ -64,9 +102,9 @@ export async function POST(request: NextRequest) {
       {
         message: "Inicio de sesión exitoso",
         session: {
-          access_token: authData.session?.access_token,
-          refresh_token: authData.session?.refresh_token,
-          expires_at: authData.session?.expires_at,
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          expires_at: authData.session.expires_at,
         },
         user: {
           id: authData.user.id,
@@ -74,6 +112,8 @@ export async function POST(request: NextRequest) {
           role: profile.role,
           first_name: profile.first_name,
           last_name: profile.last_name,
+          avatar_url: profile.avatar_url,
+          phone: profile.phone,
         },
       },
       { status: 200 },

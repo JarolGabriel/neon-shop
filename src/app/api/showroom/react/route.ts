@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+import { getAuthUserFromToken, supabaseAdmin } from "@/lib/supabase";
 
 /**
  * POST /api/showroom/react
@@ -22,21 +18,19 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
+    const user = await getAuthUserFromToken(token);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Sesión inválida o expirada." },
         { status: 401 },
       );
     }
 
-    // 2. Extraer el review_id al que el usuario quiere reaccionar
     const body = await request.json();
-    const { review_id } = body;
+    const { review_id, reaction_type = "like" } = body;
+
+    const allowedReactions = ["like", "fire", "celebrate", "wow", "unicorn"];
 
     if (!review_id) {
       return NextResponse.json(
@@ -45,12 +39,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Verificar si el usuario ya le había dado like a esta publicación específica
+    if (!allowedReactions.includes(reaction_type)) {
+      return NextResponse.json(
+        { error: "Tipo de reacción no válido." },
+        { status: 400 },
+      );
+    }
+
     const { data: existingReaction, error: checkError } = await supabaseAdmin
       .from("review_reactions")
       .select("id")
       .eq("review_id", review_id)
       .eq("user_id", user.id)
+      .eq("reaction_type", reaction_type)
       .maybeSingle();
 
     if (checkError) throw checkError;
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
         .insert({
           review_id,
           user_id: user.id,
-          reaction_type: "like", // Por si en el futuro agregas fueguitos, corazones, etc.
+          reaction_type,
         });
 
       if (insertError) throw insertError;
