@@ -163,6 +163,11 @@ export interface AdminProductVariant {
   size?: string | null;
 }
 
+export interface ProductAvailableColor {
+  label: string;
+  hex: string;
+}
+
 export interface AdminProduct {
   id: string;
   name: string;
@@ -173,6 +178,8 @@ export interface AdminProduct {
   compare_at_price: number | null;
   size: string | null;
   color: string | null;
+  available_sizes?: string[] | null;
+  available_colors?: ProductAvailableColor[] | null;
   voltage: string | null;
   material: string | null;
   stock: number | null;
@@ -237,6 +244,8 @@ export interface UpdateAdminProductPayload {
   is_featured?: boolean;
   is_best_seller?: boolean;
   category_id?: string | null;
+  available_sizes?: string[];
+  available_colors?: ProductAvailableColor[];
   variants?: Array<{
     id?: string;
     name: string;

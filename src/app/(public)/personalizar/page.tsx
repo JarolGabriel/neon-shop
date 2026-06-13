@@ -5,7 +5,10 @@ import { ImageTestimonials } from "@/components/store/ImageTestimonials";
 import { NeonTextCustomizer } from "@/components/store/neon-customizer/NeonTextCustomizer";
 import { ProductTrustSection } from "@/components/store/ProductTrustSection";
 import { getSiteSettings } from "@/lib/api";
-import { resolveWhatsappNumber } from "@/lib/whatsapp-utils";
+import {
+  getWhatsappNumberFromSettings,
+  isWhatsappConfigured,
+} from "@/lib/whatsapp-utils";
 
 export const metadata: Metadata = {
   title: "Personaliza tu Letrero | Neon Shop",
@@ -15,11 +18,15 @@ export const metadata: Metadata = {
 
 export default async function PersonalizarPage() {
   const settings = await getSiteSettings();
-  const whatsappNumber = resolveWhatsappNumber(settings);
+  const whatsappNumber = getWhatsappNumberFromSettings(settings);
+  const whatsappConfigured = isWhatsappConfigured(settings);
 
   return (
     <>
-      <NeonTextCustomizer whatsappNumber={whatsappNumber} />
+      <NeonTextCustomizer
+        whatsappNumber={whatsappNumber}
+        whatsappConfigured={whatsappConfigured}
+      />
       <CustomShowcaseCompare />
       <HowItWorksSection />
       <ImageTestimonials />

@@ -21,6 +21,58 @@ function sanitizeColorHex(hex: unknown): string | null {
   return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : null;
 }
 
+function parseAvailableSizes(input: unknown): string[] {
+  if (Array.isArray(input)) {
+    return [
+      ...new Set(
+        input
+          .filter((value): value is string => typeof value === "string")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  if (typeof input === "string" && input.trim()) {
+    try {
+      return parseAvailableSizes(JSON.parse(input));
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function parseAvailableColors(
+  input: unknown,
+): Array<{ label: string; hex: string }> {
+  let raw: unknown = input;
+
+  if (typeof input === "string" && input.trim()) {
+    try {
+      raw = JSON.parse(input);
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(raw)) return [];
+
+  const map = new Map<string, { label: string; hex: string }>();
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as { label?: unknown; hex?: unknown };
+    const label = typeof record.label === "string" ? record.label.trim() : "";
+    const hex = sanitizeColorHex(record.hex);
+    if (!label || !hex) continue;
+    map.set(hex.toLowerCase(), { label, hex });
+  }
+
+  return [...map.values()];
+}
+
 /**
  * PUT /api/admin/products/:id
  * Actualiza los datos de un producto específico y sincroniza sus variantes
@@ -85,11 +137,19 @@ export async function PUT(
       "is_featured",
       "is_best_seller",
       "category_id",
+      "available_sizes",
+      "available_colors",
     ];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
-        updateData[field] = body[field];
+        if (field === "available_sizes") {
+          updateData[field] = parseAvailableSizes(body[field]);
+        } else if (field === "available_colors") {
+          updateData[field] = parseAvailableColors(body[field]);
+        } else {
+          updateData[field] = body[field];
+        }
       }
     }
 

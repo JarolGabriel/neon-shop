@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, MessageCircle, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   getLastOrder,
@@ -100,9 +101,17 @@ function OrderSummaryCard({ order }: { order: LastOrderSnapshot }) {
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Button
           type="button"
-          onClick={() =>
-            openWhatsAppOrder(order.whatsappNumber, order.whatsappMessage)
-          }
+          onClick={() => {
+            const opened = openWhatsAppOrder(
+              order.whatsappNumber,
+              order.whatsappMessage,
+            );
+            if (!opened) {
+              toast.error(
+                "WhatsApp no configurado. Contacta al taller por otro medio.",
+              );
+            }
+          }}
           className="rounded-full bg-neon-pink text-primary-foreground hover:bg-neon-pink/90 dark:bg-cyber-yellow dark:text-black dark:hover:bg-cyber-yellow/90"
         >
           <MessageCircle className="size-4" aria-hidden="true" />

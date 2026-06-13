@@ -478,6 +478,8 @@ export type Database = {
       }
       products: {
         Row: {
+          available_colors: Json
+          available_sizes: string[]
           category_id: string | null
           color: string | null
           compare_at_price: number | null
@@ -502,6 +504,8 @@ export type Database = {
           voltage: string | null
         }
         Insert: {
+          available_colors?: Json
+          available_sizes?: string[]
           category_id?: string | null
           color?: string | null
           compare_at_price?: number | null
@@ -526,6 +530,8 @@ export type Database = {
           voltage?: string | null
         }
         Update: {
+          available_colors?: Json
+          available_sizes?: string[]
           category_id?: string | null
           color?: string | null
           compare_at_price?: number | null

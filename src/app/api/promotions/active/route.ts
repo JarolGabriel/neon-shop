@@ -1,14 +1,19 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { isPromotionCurrentlyActive } from "@/lib/promotions";
 import {
   buildSupabaseErrorPayload,
   createUnexpectedErrorResponse,
 } from "@/lib/supabase-errors";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+
 export async function GET() {
   try {
-    const now = new Date().toISOString();
-
     const { data, error } = await supabaseAdmin
       .from("promotions")
       .select(
@@ -18,9 +23,6 @@ export async function GET() {
       `,
       )
       .eq("is_active", true)
-      .or(
-        `and(start_date.lte.${now},end_date.gte.${now}),and(start_date.is.null,end_date.is.null)`,
-      )
       .order("display_order", { ascending: true });
 
     if (error) {
@@ -35,7 +37,14 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    const activePromotions = (data ?? []).filter((promotion) =>
+      isPromotionCurrentlyActive(promotion),
+    );
+
+    return NextResponse.json(
+      { success: true, data: activePromotions },
+      { status: 200, headers: NO_CACHE_HEADERS },
+    );
   } catch (error: unknown) {
     return createUnexpectedErrorResponse(
       "GET /api/promotions/active",

@@ -343,7 +343,7 @@ export async function getCategoriesWithProductCounts(): Promise<
 
 export async function getActivePromotions(): Promise<ActivePromotionsResponse> {
   return fetchApi<ActivePromotionsResponse>("/api/promotions/active", {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 }
 
@@ -401,25 +401,9 @@ export async function getProductBySlug(
   return json.data;
 }
 
-let clientSettingsCache: {
-  data: Record<string, string>;
-  expiresAt: number;
-} | null = null;
-
-const CLIENT_SETTINGS_TTL_MS = 5 * 60 * 1000;
-
 export async function getSiteSettings(): Promise<Record<string, string>> {
-  const isBrowser = typeof window !== "undefined";
-
-  if (isBrowser && clientSettingsCache) {
-    if (Date.now() < clientSettingsCache.expiresAt) {
-      return clientSettingsCache.data;
-    }
-    clientSettingsCache = null;
-  }
-
   const res = await fetch(resolveApiUrl("/api/settings"), {
-    ...(isBrowser ? { cache: "no-store" } : { next: { revalidate: 300 } }),
+    cache: "no-store",
   });
 
   if (!res.ok) return {};
@@ -428,16 +412,7 @@ export async function getSiteSettings(): Promise<Record<string, string>> {
     success: boolean;
     data?: Record<string, string>;
   };
-  const data = json.data ?? {};
-
-  if (isBrowser) {
-    clientSettingsCache = {
-      data,
-      expiresAt: Date.now() + CLIENT_SETTINGS_TTL_MS,
-    };
-  }
-
-  return data;
+  return json.data ?? {};
 }
 
 export async function getProductReviews(

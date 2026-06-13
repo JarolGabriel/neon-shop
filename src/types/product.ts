@@ -62,8 +62,15 @@ export type ProductDetailVariant = Pick<
   | "is_active"
 >;
 
+export interface ProductAvailableColor {
+  label: string;
+  hex: string;
+}
+
 /** Producto tal como lo devuelve GET /api/products/[slug] */
 export type ProductDetail = ProductRow & {
+  available_sizes?: string[] | null;
+  available_colors?: ProductAvailableColor[] | null;
   images: ProductDetailImage[];
   variants: ProductDetailVariant[];
 };

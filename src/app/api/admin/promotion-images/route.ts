@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
 
 // Definimos el tipo de inserción para la tabla de imágenes
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dbError) throw dbError;
+
+    revalidatePath("/");
+    revalidatePath("/comunidad");
 
     return NextResponse.json({ success: true, data });
   } catch (error: unknown) {

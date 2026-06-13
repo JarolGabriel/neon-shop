@@ -210,7 +210,10 @@ export function PromotionForm({
                 </SelectContent>
               </Select>
               <FormDescription className="text-slate-500">
-                Vista previa en tienda:{" "}
+                El carrusel de la página de inicio (/) solo muestra promociones
+                con ubicación &quot;Carrusel del inicio (Home)&quot; y al menos
+                una imagen. Las de comunidad móvil solo se ven en /comunidad.
+                Vista previa:{" "}
                 <a
                   href={previewPath}
                   target="_blank"

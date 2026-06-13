@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { parseStoredProductColor } from "@/lib/product-catalog-options";
+import {
+  colorKeyFromNameAndHex,
+  parseAvailableColorsFromDb,
+  parseStoredProductColor,
+  productHasConfiguredOptions,
+} from "@/lib/product-catalog-options";
 import type { ProductDetail, ProductDetailVariant } from "@/types/product";
 
 export interface VariantColorOption {
@@ -19,6 +24,8 @@ export interface UseProductVariantsResult {
   selectedColorIndex: number;
   selectedVariant: ProductDetailVariant | null;
   currentPrice: number;
+  hasConfiguredOptions: boolean;
+  usesAdvancedVariants: boolean;
   selectSize: (size: string) => void;
   selectColor: (colorKey: string) => void;
   isSizeAvailable: (size: string) => boolean;
@@ -32,13 +39,6 @@ function colorKeyOf(variant: ProductDetailVariant): string {
   );
 }
 
-function colorKeyFromNameAndHex(
-  color: string,
-  colorHex: string | null,
-): string {
-  return colorHex?.trim().toLowerCase() || color.trim().toLowerCase();
-}
-
 export function useProductVariants(
   product: ProductDetail,
 ): UseProductVariantsResult {
@@ -47,8 +47,35 @@ export function useProductVariants(
     [product.variants],
   );
 
+  const usesAdvancedVariants = variants.length > 0;
+
+  const configuredOptions = useMemo(() => {
+    if (usesAdvancedVariants) return null;
+    if (!productHasConfiguredOptions(product)) return null;
+
+    const sizes = product.available_sizes ?? [];
+    const colors = parseAvailableColorsFromDb(product.available_colors).map(
+      (color) => ({
+        key: colorKeyFromNameAndHex(color.label, color.hex),
+        color: color.label,
+        colorHex: color.hex,
+      }),
+    );
+
+    return {
+      sizes,
+      colors,
+      initialSize: sizes[0] ?? null,
+      initialColorKey: colors[0]?.key ?? null,
+    };
+  }, [
+    usesAdvancedVariants,
+    product.available_sizes,
+    product.available_colors,
+  ]);
+
   const simpleProduct = useMemo(() => {
-    if (variants.length > 0) return null;
+    if (usesAdvancedVariants || configuredOptions) return null;
 
     const parsed = parseStoredProductColor(product.color);
     const size = product.size?.trim() || null;
@@ -74,9 +101,15 @@ export function useProductVariants(
       initialSize: size,
       initialColorKey: colorKey,
     };
-  }, [variants.length, product.size, product.color]);
+  }, [
+    usesAdvancedVariants,
+    configuredOptions,
+    product.size,
+    product.color,
+  ]);
 
   const sizes = useMemo(() => {
+    if (configuredOptions) return configuredOptions.sizes;
     if (simpleProduct) return simpleProduct.sizes;
 
     const seen = new Set<string>();
@@ -88,9 +121,10 @@ export function useProductVariants(
       }
     }
     return out;
-  }, [simpleProduct, variants]);
+  }, [configuredOptions, simpleProduct, variants]);
 
   const colors = useMemo<VariantColorOption[]>(() => {
+    if (configuredOptions) return configuredOptions.colors;
     if (simpleProduct) return simpleProduct.colors;
 
     const map = new Map<string, VariantColorOption>();
@@ -101,18 +135,23 @@ export function useProductVariants(
       }
     }
     return [...map.values()];
-  }, [simpleProduct, variants]);
+  }, [configuredOptions, simpleProduct, variants]);
 
   const initial = useMemo(() => {
-    if (simpleProduct) return null;
+    if (configuredOptions || simpleProduct) return null;
     return variants.find((v) => v.price === product.price) ?? variants[0] ?? null;
-  }, [simpleProduct, variants, product.price]);
+  }, [configuredOptions, simpleProduct, variants, product.price]);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(
-    simpleProduct?.initialSize ?? initial?.size ?? sizes[0] ?? null,
+    configuredOptions?.initialSize ??
+      simpleProduct?.initialSize ??
+      initial?.size ??
+      sizes[0] ??
+      null,
   );
   const [selectedColorKey, setSelectedColorKey] = useState<string | null>(
-    simpleProduct?.initialColorKey ??
+    configuredOptions?.initialColorKey ??
+      simpleProduct?.initialColorKey ??
       (initial ? colorKeyOf(initial) : (colors[0]?.key ?? null)),
   );
 
@@ -127,7 +166,7 @@ export function useProductVariants(
   );
 
   const selectedVariant = useMemo(() => {
-    if (simpleProduct) return null;
+    if (configuredOptions || simpleProduct) return null;
 
     return (
       findVariant(selectedSize, selectedColorKey) ??
@@ -136,45 +175,54 @@ export function useProductVariants(
       variants[0] ??
       null
     );
-  }, [simpleProduct, findVariant, selectedSize, selectedColorKey, variants]);
+  }, [
+    configuredOptions,
+    simpleProduct,
+    findVariant,
+    selectedSize,
+    selectedColorKey,
+    variants,
+  ]);
 
   const selectSize = useCallback(
     (size: string) => {
       setSelectedSize(size);
-      if (simpleProduct) return;
+      if (configuredOptions || simpleProduct) return;
 
       if (!findVariant(size, selectedColorKey)) {
         const alt = variants.find((v) => v.size === size);
         if (alt) setSelectedColorKey(colorKeyOf(alt));
       }
     },
-    [simpleProduct, findVariant, selectedColorKey, variants],
+    [configuredOptions, simpleProduct, findVariant, selectedColorKey, variants],
   );
 
   const selectColor = useCallback(
     (key: string) => {
       setSelectedColorKey(key);
-      if (simpleProduct) return;
+      if (configuredOptions || simpleProduct) return;
 
       if (!findVariant(selectedSize, key)) {
         const alt = variants.find((v) => colorKeyOf(v) === key);
         if (alt?.size) setSelectedSize(alt.size);
       }
     },
-    [simpleProduct, findVariant, selectedSize, variants],
+    [configuredOptions, simpleProduct, findVariant, selectedSize, variants],
   );
 
   const isSizeAvailable = useCallback(
     (size: string) => {
+      if (configuredOptions) return configuredOptions.sizes.includes(size);
       if (simpleProduct) return simpleProduct.sizes.includes(size);
 
       return variants.some(
         (v) =>
           v.size === size &&
-          (selectedColorKey ? colorKeyOf(v) === selectedColorKey : true),
+          (selectedColorKey ? colorKeyOf(v) === selectedColorKey : true) &&
+          (v.stock ?? 0) > 0,
       );
     },
-    [simpleProduct, variants, selectedColorKey],
+    [configuredOptions, simpleProduct, variants, selectedColorKey],
   );
 
   const selectedColorIndex = colors.findIndex(
@@ -190,6 +238,8 @@ export function useProductVariants(
     selectedColorIndex: selectedColorIndex < 0 ? 0 : selectedColorIndex,
     selectedVariant,
     currentPrice: selectedVariant?.price ?? product.price,
+    hasConfiguredOptions: configuredOptions !== null,
+    usesAdvancedVariants,
     selectSize,
     selectColor,
     isSizeAvailable,

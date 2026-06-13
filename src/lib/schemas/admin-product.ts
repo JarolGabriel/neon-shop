@@ -7,12 +7,6 @@ const optionalText = z
   .optional()
   .or(z.literal(""));
 
-const shortText = z
-  .string()
-  .max(200, "Máximo 200 caracteres")
-  .optional()
-  .or(z.literal(""));
-
 const specField = z
   .string()
   .max(80, "Máximo 80 caracteres")
@@ -54,6 +48,11 @@ const colorHexField = z
   .optional()
   .or(z.literal(""));
 
+export const productAvailableColorSchema = z.object({
+  label: z.string().min(1, "Nombre de color requerido"),
+  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Hex inválido"),
+});
+
 export const adminProductVariantSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().max(80).optional().or(z.literal("")),
@@ -70,34 +69,35 @@ const sharedProductFields = {
   name: nameField,
   slug: slugField,
   description: optionalText,
-  short_description: shortText,
+  short_description: optionalText,
   price: priceField,
   compare_at_price: compareAtPriceField,
   category_id: categoryField,
   stock: stockField,
-  size: specField,
-  color: specField,
-  color_hex: colorHexField,
   voltage: specField,
   material: specField,
   sku: specField,
   is_active: z.boolean(),
   is_featured: z.boolean(),
+  available_sizes: z.array(z.string().min(1)),
+  available_colors: z.array(productAvailableColorSchema),
+  variants: z.array(adminProductVariantSchema),
 };
 
 export const adminProductCreateSchema = z.object({
   ...sharedProductFields,
   images: z.array(imageFile).min(1, "Sube al menos una imagen"),
-  variants: z.array(adminProductVariantSchema).optional(),
 });
 
 export const adminProductUpdateSchema = z.object({
   ...sharedProductFields,
   is_best_seller: z.boolean(),
-  variants: z.array(adminProductVariantSchema).optional(),
 });
 
 export type AdminProductVariantInput = z.infer<typeof adminProductVariantSchema>;
+export type ProductAvailableColorInput = z.infer<
+  typeof productAvailableColorSchema
+>;
 export type AdminProductCreateInput = z.infer<typeof adminProductCreateSchema>;
 export type AdminProductUpdateInput = z.infer<typeof adminProductUpdateSchema>;
 

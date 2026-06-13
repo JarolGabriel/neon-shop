@@ -1,11 +1,22 @@
 import { NEON_COLORS, SIZE_OPTIONS } from "@/lib/neon-customizer-config";
-import type { AdminProductVariantInput } from "@/lib/schemas/admin-product";
 
 export { NEON_COLORS };
 
 export const PRODUCT_SIZE_PRESETS = SIZE_OPTIONS;
 
 export const CUSTOM_SIZE_VALUE = "__custom__";
+
+export interface AdminProductVariantDraft {
+  id?: string;
+  name?: string;
+  sku?: string;
+  size?: string;
+  color?: string;
+  color_hex?: string;
+  price?: number;
+  stock?: number;
+  is_active?: boolean;
+}
 
 export function normalizeCustomSize(input: string): string {
   const trimmed = input.trim();
@@ -56,6 +67,13 @@ export function suggestVariantName(size?: string, color?: string): string {
     color?.trim() || null,
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+export function colorKeyFromNameAndHex(
+  color: string,
+  colorHex: string | null,
+): string {
+  return colorHex?.trim().toLowerCase() || color.trim().toLowerCase();
 }
 
 export function lookupNeonColorHex(colorName: string | null | undefined): string | null {
@@ -115,10 +133,10 @@ export function sanitizeColorHex(hex: unknown): string | null {
 }
 
 export function normalizeVariantForSubmit(
-  variant: AdminProductVariantInput,
+  variant: AdminProductVariantDraft,
   productSlug: string,
   basePrice: number,
-): AdminProductVariantInput {
+): AdminProductVariantDraft {
   const size = variant.size?.trim() || "";
   const color = variant.color?.trim() || "";
   const colorHex =
@@ -139,7 +157,7 @@ export function normalizeVariantForSubmit(
   };
 }
 
-export function isVariantRowFilled(variant: AdminProductVariantInput): boolean {
+export function isVariantRowFilled(variant: AdminProductVariantDraft): boolean {
   return Boolean(variant.size?.trim() || variant.color?.trim());
 }
 
@@ -157,8 +175,8 @@ export function buildVariantCombinations(
   colors: VariantColorSelection[],
   basePrice: number,
   baseStock: number,
-): AdminProductVariantInput[] {
-  const variants: AdminProductVariantInput[] = [];
+): AdminProductVariantDraft[] {
+  const variants: AdminProductVariantDraft[] = [];
 
   for (const size of sizes) {
     const normalizedSize = size.trim();
@@ -185,10 +203,10 @@ export function buildVariantCombinations(
 }
 
 export function mergeVariantCombinations(
-  existing: AdminProductVariantInput[],
-  generated: AdminProductVariantInput[],
-): AdminProductVariantInput[] {
-  const map = new Map<string, AdminProductVariantInput>();
+  existing: AdminProductVariantDraft[],
+  generated: AdminProductVariantDraft[],
+): AdminProductVariantDraft[] {
+  const map = new Map<string, AdminProductVariantDraft>();
 
   for (const variant of existing) {
     if (!isVariantRowFilled(variant)) continue;
@@ -206,4 +224,190 @@ export function mergeVariantCombinations(
   }
 
   return [...map.values()];
+}
+
+export interface ProductAvailableColor {
+  label: string;
+  hex: string;
+}
+
+export function normalizeAvailableSizes(sizes: string[] | undefined): string[] {
+  if (!sizes?.length) return [];
+
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const size of sizes) {
+    const value = size.trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    normalized.push(value);
+  }
+
+  return normalized;
+}
+
+export function normalizeAvailableColors(
+  colors: ProductAvailableColor[] | undefined,
+): ProductAvailableColor[] {
+  if (!colors?.length) return [];
+
+  const map = new Map<string, ProductAvailableColor>();
+
+  for (const color of colors) {
+    const label = color.label?.trim();
+    const hex = sanitizeColorHex(color.hex);
+    if (!label || !hex) continue;
+    map.set(hex.toLowerCase(), { label, hex });
+  }
+
+  return [...map.values()];
+}
+
+export function parseAvailableColorsFromDb(
+  raw: unknown,
+): ProductAvailableColor[] {
+  if (!Array.isArray(raw)) return [];
+
+  const parsed: ProductAvailableColor[] = [];
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as { label?: unknown; hex?: unknown };
+    const label = typeof record.label === "string" ? record.label.trim() : "";
+    const hex = sanitizeColorHex(record.hex);
+    if (!label || !hex) continue;
+    parsed.push({ label, hex });
+  }
+
+  return normalizeAvailableColors(parsed);
+}
+
+export function extractUniqueSizesFromVariants(
+  variants: Array<{ size?: string | null }>,
+): string[] {
+  const seen = new Set<string>();
+  const sizes: string[] = [];
+
+  for (const variant of variants) {
+    const size = variant.size?.trim();
+    if (!size || seen.has(size)) continue;
+    seen.add(size);
+    sizes.push(size);
+  }
+
+  return sizes;
+}
+
+export function extractUniqueColorsFromVariants(
+  variants: Array<{ color?: string | null; color_hex?: string | null }>,
+): ProductAvailableColor[] {
+  const colors: ProductAvailableColor[] = [];
+
+  for (const variant of variants) {
+    const label = variant.color?.trim();
+    if (!label) continue;
+
+    const hex =
+      sanitizeColorHex(variant.color_hex) ?? lookupNeonColorHex(label) ?? "#ffffff";
+
+    colors.push({ label, hex });
+  }
+
+  return normalizeAvailableColors(colors);
+}
+
+export function productHasConfiguredOptions(product: {
+  available_sizes?: string[] | null;
+  available_colors?: ProductAvailableColor[] | null;
+}): boolean {
+  return (
+    (product.available_sizes?.length ?? 0) > 0 ||
+    (product.available_colors?.length ?? 0) > 0
+  );
+}
+
+export function productUsesAdvancedVariants(product: {
+  product_variants?: Array<{ id: string }>;
+  variants?: Array<{ id: string }>;
+}): boolean {
+  return (
+    (product.product_variants?.length ?? 0) > 0 ||
+    (product.variants?.length ?? 0) > 0
+  );
+}
+
+/** @deprecated Use productUsesAdvancedVariants */
+export function productHasLegacyVariants(product: {
+  product_variants?: Array<{ id: string }>;
+  available_sizes?: string[] | null;
+  available_colors?: ProductAvailableColor[] | null;
+}): boolean {
+  return (
+    (product.product_variants?.length ?? 0) > 0 &&
+    !productHasConfiguredOptions(product)
+  );
+}
+
+export function parseProductSelectionNotes(notes: string): {
+  sizeLabel: string | null;
+  colorName: string | null;
+  userNote: string | null;
+} {
+  const trimmed = notes.trim();
+  if (!trimmed) {
+    return { sizeLabel: null, colorName: null, userNote: null };
+  }
+
+  const newlineIndex = trimmed.indexOf("\n");
+  const firstLine =
+    newlineIndex >= 0 ? trimmed.slice(0, newlineIndex) : trimmed;
+  const rest = newlineIndex >= 0 ? trimmed.slice(newlineIndex + 1).trim() : "";
+
+  if (!firstLine.includes("Tamaño:") && !firstLine.includes("Color:")) {
+    return { sizeLabel: null, colorName: null, userNote: trimmed };
+  }
+
+  let sizeLabel: string | null = null;
+  let colorName: string | null = null;
+
+  for (const segment of firstLine.split(" · ")) {
+    if (segment.startsWith("Tamaño:")) {
+      sizeLabel = segment.replace("Tamaño:", "").trim();
+    }
+    if (segment.startsWith("Color:")) {
+      colorName = segment.replace("Color:", "").trim();
+    }
+  }
+
+  return {
+    sizeLabel: sizeLabel || null,
+    colorName: colorName || null,
+    userNote: rest || null,
+  };
+}
+
+export function buildProductSelectionNotes(
+  size: string | null,
+  colorName: string | null,
+  userNote?: string,
+): string | undefined {
+  const parts: string[] = [];
+
+  if (size) {
+    parts.push(`Tamaño: ${getProductSizeLabel(size)}`);
+  }
+
+  if (colorName) {
+    parts.push(`Color: ${colorName}`);
+  }
+
+  const prefix = parts.join(" · ");
+  const trimmedNote = userNote?.trim();
+
+  if (prefix && trimmedNote) {
+    return `${prefix}\n${trimmedNote}`;
+  }
+
+  return prefix || trimmedNote || undefined;
 }

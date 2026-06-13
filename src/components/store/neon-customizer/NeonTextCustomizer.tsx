@@ -39,13 +39,21 @@ import {
   neonTextFormSchema,
   type NeonTextFormValues,
 } from "@/lib/schemas/neon-text-form";
-import { buildWhatsAppUrl } from "@/lib/whatsapp-utils";
+import {
+  buildWhatsAppUrl,
+  toAbsolutePublicUrl,
+  truncateWhatsappMessage,
+} from "@/lib/whatsapp-utils";
 
 interface NeonTextCustomizerProps {
-  whatsappNumber: string;
+  whatsappNumber: string | null;
+  whatsappConfigured: boolean;
 }
 
-export function NeonTextCustomizer({ whatsappNumber }: NeonTextCustomizerProps) {
+export function NeonTextCustomizer({
+  whatsappNumber,
+  whatsappConfigured,
+}: NeonTextCustomizerProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -371,53 +379,65 @@ export function NeonTextCustomizer({ whatsappNumber }: NeonTextCustomizerProps) 
         customer_notes: values.customer_notes || undefined,
       });
 
-      const previewUrl = response.data.uploaded_file_url ?? "";
+      const previewUrl = toAbsolutePublicUrl(response.data.uploaded_file_url) ?? "";
       const usoLabel =
         values.usage_type === "interior" ? "Interior" : "Exterior";
 
-      const mensaje = [
-        "🌟 *Nueva cotización de letrero de neón*",
-        "",
-        `📝 Texto: ${values.text_content}`,
-        `🔤 Fuente: ${values.preferred_font || "No especificada"}`,
-        `📐 Tamaño: ${getSizeLabel(values.preferred_size)}`,
-        `💡 Uso: ${usoLabel}`,
-        `🎨 Color: ${values.preferred_color || "A definir"}`,
-        `⚡ Efecto: ${
-          SPECIAL_EFFECTS.find((e) => e.id === selectedEffect)?.label ??
-          "Color único"
-        }`,
-        ...(selectedEffect === "multicolor" &&
-        Object.keys(letterColors).length > 0
-          ? [
-              `🔤 Colores por letra: ${Object.entries(letterColors)
-                .map(([i, c]) => {
-                  const char = values.text_content.trim()[Number(i)] ?? "";
-                  return `'${char}'→${c}`;
-                })
-                .join(", ")}`,
-            ]
-          : []),
-        "",
-        `👤 Cliente: ${values.customer_name}`,
-        `📧 Email: ${values.customer_email}`,
-        ...(values.customer_phone
-          ? [`📱 WhatsApp: ${values.customer_phone}`]
-          : []),
-        ...(values.customer_notes
-          ? [`📋 Detalles: ${values.customer_notes}`]
-          : []),
-        ...(priceEstimate
-          ? [
-              "",
-              `💰 Estimación orientativa: ${formatUsd(priceEstimate.amountUsd)} (precio final por confirmar)`,
-            ]
-          : []),
-        "",
-        `🖼️ Vista previa: ${previewUrl}`,
-      ].join("\n");
+      const mensaje = truncateWhatsappMessage(
+        [
+          "Nueva cotizacion de letrero de neon",
+          "",
+          `Texto: ${values.text_content}`,
+          `Fuente: ${values.preferred_font || "No especificada"}`,
+          `Tamaño: ${getSizeLabel(values.preferred_size)}`,
+          `Uso: ${usoLabel}`,
+          `Color: ${values.preferred_color || "A definir"}`,
+          `Efecto: ${
+            SPECIAL_EFFECTS.find((e) => e.id === selectedEffect)?.label ??
+            "Color unico"
+          }`,
+          ...(selectedEffect === "multicolor" &&
+          Object.keys(letterColors).length > 0
+            ? [
+                `Colores por letra: ${Object.entries(letterColors)
+                  .map(([i, c]) => {
+                    const char = values.text_content.trim()[Number(i)] ?? "";
+                    return `'${char}'->${c}`;
+                  })
+                  .join(", ")}`,
+              ]
+            : []),
+          "",
+          `Cliente: ${values.customer_name}`,
+          `Email: ${values.customer_email}`,
+          ...(values.customer_phone
+            ? [`Telefono: ${values.customer_phone}`]
+            : []),
+          ...(values.customer_notes
+            ? [`Detalles: ${values.customer_notes}`]
+            : []),
+          ...(priceEstimate
+            ? [
+                "",
+                `Estimacion orientativa: ${formatUsd(priceEstimate.amountUsd)} USD (precio final por confirmar)`,
+              ]
+            : []),
+          ...(previewUrl ? ["", `Vista previa: ${previewUrl}`] : []),
+        ].join("\n"),
+      );
 
-      window.open(buildWhatsAppUrl(whatsappNumber, mensaje), "_blank");
+      if (!whatsappConfigured || !whatsappNumber) {
+        toast.error("WhatsApp no configurado. Contacta al taller por otro medio.");
+        return;
+      }
+
+      const whatsappUrl = buildWhatsAppUrl(whatsappNumber, mensaje);
+      if (!whatsappUrl) {
+        toast.error("No se pudo abrir WhatsApp. Verifica el numero en configuracion.");
+        return;
+      }
+
+      window.open(whatsappUrl, "_blank");
     } catch {
       if (allAnimated) {
         allAnimated.forEach((el) => {
@@ -976,7 +996,7 @@ export function NeonTextCustomizer({ whatsappNumber }: NeonTextCustomizerProps) 
           <div className="mt-4 border-t border-input pt-4 pb-4 lg:mt-6 lg:pb-6">
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !whatsappConfigured}
               className="h-auto w-full rounded-xl border border-transparent bg-neon-pink py-3 text-base font-bold text-white transition-colors duration-200 hover:bg-neon-pink/90 dark:bg-cyber-yellow dark:text-black dark:hover:bg-cyber-yellow/90 lg:py-4 lg:text-lg"
             >
               {isSubmitting ? (

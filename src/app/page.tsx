@@ -12,6 +12,8 @@ import { FAQSection } from "@/components/store/FAQSection";
 import { BackToTop } from "@/components/store/BackToTop";
 import { StickyStopProvider } from "@/context/StickyStopContext";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Neon Shop | Letreros LED y Neón Personalizados",
   description:

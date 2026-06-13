@@ -2,6 +2,7 @@
 
 import { Box, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { ProductCustomizationNote } from "@/components/store/ProductCustomizationNote";
 import { ProductAccordion } from "@/components/store/ProductAccordion";
 import { ProductBenefits } from "@/components/store/ProductBenefits";
@@ -13,8 +14,16 @@ import { ProductVariantSelector } from "@/components/store/ProductVariantSelecto
 import { PRODUCT_ACCORDION_ITEMS } from "@/components/store/product-accordion-data";
 import { Button } from "@/components/ui/button";
 import { addToCart, getCartSessionId } from "@/lib/api";
+import {
+  buildProductSelectionNotes,
+} from "@/lib/product-catalog-options";
 import { parseCartNotes } from "@/lib/schemas/cart-notes";
+import { resolvePublicStorageUrl } from "@/lib/storage-url";
 import { LOW_STOCK_THRESHOLD } from "@/lib/stock-utils";
+import {
+  buildProductWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/whatsapp-utils";
 import { useCart } from "@/context/CartContext";
 import {
   cn,
@@ -27,7 +36,8 @@ import type { ProductDetail } from "@/types/product";
 
 interface ProductInfoProps {
   product: ProductDetail;
-  whatsappNumber: string;
+  whatsappNumber: string | null;
+  whatsappConfigured: boolean;
   selection: UseProductVariantsResult;
   onSelectColor: (key: string) => void;
 }
@@ -37,12 +47,14 @@ type CartState = "idle" | "loading" | "success" | "error";
 export function ProductInfo({
   product,
   whatsappNumber,
+  whatsappConfigured,
   selection,
   onSelectColor,
 }: ProductInfoProps) {
   const [cartState, setCartState] = useState<CartState>("idle");
   const [customizationNote, setCustomizationNote] = useState("");
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const { fetchCart } = useCart();
 
   const {
@@ -52,32 +64,67 @@ export function ProductInfo({
     colors,
     selectedColorKey,
     variants,
+    usesAdvancedVariants,
+    sizes,
   } = selection;
-  const hasVariants = variants.length > 0;
   const compareAt = product.compare_at_price;
   const discount = getDiscountPercent(currentPrice, compareAt);
   const selectedColorName =
     colors.find((c) => c.key === selectedColorKey)?.color ?? null;
-  const availableStock = hasVariants
+  const hasOptionSelectors = sizes.length > 0 || colors.length > 0;
+  const requiresSize = sizes.length > 0;
+  const requiresColor = colors.length > 0;
+  const missingSize = requiresSize && !selectedSize;
+  const missingColor = requiresColor && !selectedColorKey;
+  const availableStock = usesAdvancedVariants
     ? (selectedVariant?.stock ?? 0)
     : (product.stock ?? 0);
   const isOutOfStock = availableStock <= 0;
   const isLowStock =
     availableStock > 0 && availableStock <= LOW_STOCK_THRESHOLD;
   const canAddToCart =
-    !isOutOfStock && (!hasVariants || selectedVariant !== null);
+    !isOutOfStock &&
+    (usesAdvancedVariants
+      ? selectedVariant !== null
+      : hasOptionSelectors
+        ? !missingSize && !missingColor
+        : true);
 
   const handleAddToCart = async () => {
     if (!canAddToCart) return;
 
     setNoteError(null);
-    let notes: string | undefined;
+    setSelectionError(null);
+
+    if (missingSize || missingColor) {
+      setSelectionError(
+        missingSize && missingColor
+          ? "Selecciona un tamaño y un color antes de añadir al carrito."
+          : missingSize
+            ? "Selecciona un tamaño antes de añadir al carrito."
+            : "Selecciona un color antes de añadir al carrito.",
+      );
+      return;
+    }
+
+    let userNote: string | undefined;
     try {
-      notes = parseCartNotes(customizationNote);
+      userNote = parseCartNotes(customizationNote);
     } catch (error) {
       setNoteError(
         error instanceof Error ? error.message : "Nota inválida",
       );
+      return;
+    }
+
+    const notes = usesAdvancedVariants
+      ? userNote
+      : hasOptionSelectors
+        ? buildProductSelectionNotes(selectedSize, selectedColorName, userNote)
+        : userNote;
+
+    if (notes && notes.length > 200) {
+      setNoteError("La nota no puede superar 200 caracteres en total.");
       return;
     }
 
@@ -99,20 +146,59 @@ export function ProductInfo({
   };
 
   const handleWhatsApp = () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!whatsappConfigured || !whatsappNumber) {
+      toast.error("WhatsApp no configurado. Contacta al taller por otro medio.");
+      return;
+    }
+
+    setNoteError(null);
+    setSelectionError(null);
+
+    if (missingSize || missingColor) {
+      setSelectionError(
+        missingSize && missingColor
+          ? "Selecciona un tamaño y un color antes de comprar por WhatsApp."
+          : missingSize
+            ? "Selecciona un tamaño antes de comprar por WhatsApp."
+            : "Selecciona un color antes de comprar por WhatsApp.",
+      );
+      return;
+    }
+
+    let userNote: string | undefined;
+    try {
+      userNote = parseCartNotes(customizationNote);
+    } catch (error) {
+      setNoteError(
+        error instanceof Error ? error.message : "Nota inválida",
+      );
+      return;
+    }
+
+    const pageUrl = typeof window !== "undefined" ? window.location.href : "";
     const sizeValue = selectedVariant?.size ?? selectedSize;
-    const details = [
-      sizeValue ? formatSizeLabel(sizeValue) : null,
-      selectedColorName,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    const message = `Hola! Me interesa este producto: ${product.name}${
-      details ? ` (${details})` : ""
-    } — ${formatUsd(currentPrice)} USD.\n${url}`;
-    const digits = whatsappNumber.replace(/[^\d]/g, "");
-    const base = digits ? `https://wa.me/${digits}` : "https://wa.me/";
-    window.open(`${base}?text=${encodeURIComponent(message)}`, "_blank");
+    const sizeLabel = sizeValue ? formatSizeLabel(sizeValue) : null;
+    const primaryImage =
+      product.images.find((image) => image.is_primary) ?? product.images[0];
+    const imageUrl = resolvePublicStorageUrl(primaryImage?.image_url);
+
+    const message = buildProductWhatsAppMessage({
+      productName: product.name,
+      price: currentPrice,
+      pageUrl,
+      imageUrl,
+      sizeLabel,
+      colorName: selectedColorName,
+      customizationNote: userNote,
+    });
+
+    const url = buildWhatsAppUrl(whatsappNumber, message);
+    if (!url) {
+      toast.error("WhatsApp no configurado. Contacta al taller por otro medio.");
+      return;
+    }
+
+    window.open(url, "_blank");
   };
 
   return (
@@ -154,14 +240,25 @@ export function ProductInfo({
         selectedColorName={selectedColorName}
         isSizeAvailable={selection.isSizeAvailable}
         onSelectSize={selection.selectSize}
-        onSelectColor={onSelectColor}
+        onSelectColor={(key) => {
+          selection.selectColor(key);
+          if (selectionError) setSelectionError(null);
+          onSelectColor(key);
+        }}
       />
 
       <BulkDiscountNotice />
 
+      {hasOptionSelectors ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Los tamaños y colores pueden variar levemente respecto a la imagen.
+          Por WhatsApp te damos costos más exactos.
+        </p>
+      ) : null}
+
       {isOutOfStock ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {hasVariants
+          {usesAdvancedVariants
             ? "Esta variante está agotada. Elige otro tamaño o color."
             : "Este producto está agotado."}
         </p>
@@ -181,6 +278,10 @@ export function ProductInfo({
         error={noteError}
       />
 
+      {selectionError ? (
+        <p className="text-sm text-destructive">{selectionError}</p>
+      ) : null}
+
       <div className="flex flex-col gap-3">
         <Button
           size="lg"
@@ -198,10 +299,18 @@ export function ProductInfo({
           size="lg"
           variant="outline"
           onClick={handleWhatsApp}
+          disabled={!whatsappConfigured}
           className="w-full rounded-full border-border hover:border-vite-purple! hover:text-vite-purple! dark:hover:border-cyber-yellow! dark:hover:text-cyber-yellow!"
         >
           Comprar por WhatsApp
         </Button>
+
+        {!whatsappConfigured ? (
+          <p className="text-center text-xs text-muted-foreground">
+            WhatsApp no configurado. El taller aún no ha publicado un número de
+            contacto.
+          </p>
+        ) : null}
 
         {cartState === "error" ? (
           <p className="text-center text-xs text-destructive">

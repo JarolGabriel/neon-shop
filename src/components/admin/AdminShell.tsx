@@ -78,18 +78,16 @@ export function AdminShell({ children }: AdminShellProps) {
   return (
     <ThemeProvider forcedTheme="light" attribute="class" enableSystem={false}>
       <div className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="flex min-h-screen">
-          <aside className="hidden w-64 shrink-0 border-r border-slate-200 lg:block">
-            <AdminSidebar onSignOut={handleSignOut} />
-          </aside>
+        <aside className="fixed inset-y-0 left-0 z-40 hidden h-svh w-64 border-r border-slate-200 lg:block">
+          <AdminSidebar onSignOut={handleSignOut} />
+        </aside>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <AdminHeader
-              title={getSectionTitle(pathname)}
-              onSignOut={handleSignOut}
-            />
-            <main className="flex-1 p-4 lg:p-6">{children}</main>
-          </div>
+        <div className="flex min-h-screen min-w-0 flex-col lg:pl-64">
+          <AdminHeader
+            title={getSectionTitle(pathname)}
+            onSignOut={handleSignOut}
+          />
+          <main className="flex-1 p-4 lg:p-6">{children}</main>
         </div>
       </div>
     </ThemeProvider>

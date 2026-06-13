@@ -73,13 +73,18 @@ export function SettingsContactSection({
                   <Input
                     {...field}
                     type="tel"
-                    placeholder="584121234567"
+                    placeholder="12144249779"
                     className={ADMIN_INPUT_CLASS}
                     disabled={isSaving}
                   />
                 </FormControl>
-                <FormDescription>
-                  Código país (ej. 58412…). Footer, checkout y post-pedido.
+                <FormDescription className="text-slate-500">
+                  Solo dígitos con código de país, sin espacios. Ejemplo USA:{" "}
+                  <span className="font-mono text-slate-700">12144249779</span> o
+                  Venezuela:{" "}
+                  <span className="font-mono text-slate-700">584121234567</span>.
+                  Puedes pegar con + al inicio; se normaliza al guardar. Lo usan
+                  footer, checkout y mensajes post-pedido.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

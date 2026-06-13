@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// 1. Importamos la definición de la Base de Datos y el helper de Tablas
+import { parseAvailableColorsFromDb } from "@/lib/product-catalog-options";
 import { Database, Tables } from "@/types/supabase";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -97,6 +97,8 @@ export async function GET(
     // Estructuramos la respuesta final manteniendo el tipado estricto
     const responseData = {
       ...product,
+      available_sizes: product.available_sizes ?? [],
+      available_colors: parseAvailableColorsFromDb(product.available_colors),
       variants: activeVariants,
     };
 

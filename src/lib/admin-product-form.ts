@@ -8,7 +8,7 @@ import type { UpdateAdminProductPayload } from "@/types/admin";
 
 function mapVariantForApi(variant: AdminProductVariantInput) {
   return {
-    id: "id" in variant ? variant.id : undefined,
+    id: variant.id,
     name: variant.name?.trim() ?? "",
     sku: variant.sku?.trim() ?? "",
     size: variant.size?.trim() || null,
@@ -34,19 +34,25 @@ export function buildProductCreateFormData(
   }
   formData.append("category_id", values.category_id);
   formData.append("stock", String(values.stock));
-  formData.append("size", values.size?.trim() ?? "");
-  formData.append("color", values.color?.trim() ?? "");
   formData.append("voltage", values.voltage?.trim() ?? "");
   formData.append("material", values.material?.trim() ?? "");
   formData.append("sku", values.sku?.trim() ?? "");
   formData.append("is_active", values.is_active ? "true" : "false");
   formData.append("is_featured", values.is_featured ? "true" : "false");
+  formData.append(
+    "available_sizes",
+    JSON.stringify(values.available_sizes ?? []),
+  );
+  formData.append(
+    "available_colors",
+    JSON.stringify(values.available_colors ?? []),
+  );
 
   values.images.forEach((file) => {
     formData.append("image", file);
   });
 
-  if (values.variants?.length) {
+  if (values.variants.length > 0) {
     formData.append(
       "variants",
       JSON.stringify(values.variants.map(mapVariantForApi)),
@@ -68,14 +74,14 @@ export function buildProductUpdatePayload(
     compare_at_price: values.compare_at_price ?? null,
     category_id: values.category_id,
     stock: values.stock,
-    size: values.size?.trim() || null,
-    color: values.color?.trim() || null,
     voltage: values.voltage?.trim() || null,
     material: values.material?.trim() || null,
     sku: values.sku?.trim() || null,
     is_active: values.is_active,
     is_featured: values.is_featured,
     is_best_seller: values.is_best_seller,
-    variants: values.variants?.map(mapVariantForApi),
+    available_sizes: values.available_sizes ?? [],
+    available_colors: values.available_colors ?? [],
+    variants: values.variants.map(mapVariantForApi),
   };
 }
