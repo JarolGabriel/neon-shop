@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
+import { ProductAdvancedVariantsSection } from "@/components/admin/products/ProductAdvancedVariantsSection";
 import { ProductImagesDropzone } from "@/components/admin/products/ProductImagesDropzone";
+import { ProductOptionsSelector } from "@/components/admin/products/ProductOptionsSelector";
 import { ProductSharedFields } from "@/components/admin/products/ProductSharedFields";
-import { ProductVariantsEditor } from "@/components/admin/products/ProductVariantsEditor";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,7 +22,6 @@ import {
   type AdminProductUpdateInput,
 } from "@/lib/schemas/admin-product";
 import { prepareProductCreateValues } from "@/lib/admin-product-submit";
-import { isVariantRowFilled } from "@/lib/product-catalog-options";
 import type { AdminCategory } from "@/types/admin";
 
 interface ProductCreateFormProps {
@@ -36,9 +36,6 @@ export function ProductCreateForm({
   onSubmit,
 }: ProductCreateFormProps) {
   const slugEditedRef = useRef(false);
-  const [variants, setVariants] = useState<AdminProductCreateInput["variants"]>(
-    [],
-  );
 
   const form = useForm<AdminProductCreateInput>({
     resolver: zodResolver(adminProductCreateSchema),
@@ -51,14 +48,14 @@ export function ProductCreateForm({
       compare_at_price: null,
       category_id: categories[0]?.id ?? "",
       stock: 0,
-      size: "",
-      color: "",
-      color_hex: "",
       voltage: "",
       material: "",
       sku: "",
       is_active: true,
       is_featured: false,
+      available_sizes: [],
+      available_colors: [],
+      variants: [],
       images: [],
     },
   });
@@ -70,15 +67,9 @@ export function ProductCreateForm({
   }, [categories, form]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    await onSubmit(
-      prepareProductCreateValues({
-        ...values,
-        variants: variants?.filter(isVariantRowFilled),
-      }),
-    );
+    await onSubmit(prepareProductCreateValues(values));
     form.reset();
     slugEditedRef.current = false;
-    setVariants([]);
   });
 
   return (
@@ -109,12 +100,30 @@ export function ProductCreateForm({
           )}
         />
 
-        <ProductVariantsEditor
-          value={variants ?? []}
-          onChange={setVariants}
+        <ProductOptionsSelector
+          availableSizes={form.watch("available_sizes")}
+          availableColors={form.watch("available_colors")}
+          onSizesChange={(sizes) =>
+            form.setValue("available_sizes", sizes, { shouldDirty: true })
+          }
+          onColorsChange={(colors) =>
+            form.setValue("available_colors", colors, { shouldDirty: true })
+          }
           disabled={isSaving}
+        />
+
+        <ProductAdvancedVariantsSection
+          variants={form.watch("variants")}
+          onChange={(variants) =>
+            form.setValue("variants", variants, { shouldDirty: true })
+          }
           basePrice={form.watch("price") || 0}
           baseStock={form.watch("stock") ?? 0}
+          hasConfiguredOptions={
+            form.watch("available_sizes").length > 0 ||
+            form.watch("available_colors").length > 0
+          }
+          disabled={isSaving}
         />
 
         <Button

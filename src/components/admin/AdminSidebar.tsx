@@ -23,7 +23,10 @@ export function AdminSidebar({ onNavigate, onSignOut }: AdminSidebarProps) {
         <p className="text-xs text-slate-500">Panel de administración</p>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4" aria-label="Admin">
+      <nav
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4"
+        aria-label="Admin"
+      >
         {ADMIN_NAV_ITEMS.map((item) => {
           const isActive =
             item.enabled &&

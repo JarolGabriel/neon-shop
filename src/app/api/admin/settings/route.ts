@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
 
 // Obtenemos los tipos automáticos de la tabla 'site_settings'
@@ -23,6 +24,8 @@ export async function PATCH(request: NextRequest) {
 
     if (error) throw error;
 
+    revalidatePath("/", "layout");
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message =
@@ -41,6 +44,9 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) throw error;
+
+    revalidatePath("/", "layout");
+
     return NextResponse.json({ success: true, data });
   } catch (error: unknown) {
     const message =

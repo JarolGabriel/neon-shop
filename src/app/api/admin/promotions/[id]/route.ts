@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { Database } from "@/types/supabase";
 
@@ -23,6 +24,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (error) throw error;
 
+    revalidatePath("/");
+    revalidatePath("/comunidad");
+
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: unknown) {
     const message =
@@ -42,6 +46,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("id", id);
 
     if (error) throw error;
+
+    revalidatePath("/");
+    revalidatePath("/comunidad");
 
     return NextResponse.json(
       { success: true, message: "Promoción eliminada correctamente" },

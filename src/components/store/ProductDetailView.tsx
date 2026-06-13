@@ -11,7 +11,8 @@ import type { ProductDetail } from "@/types/product";
 
 interface ProductDetailViewProps {
   product: ProductDetail;
-  whatsappNumber: string;
+  whatsappNumber: string | null;
+  whatsappConfigured: boolean;
 }
 
 function sortImages(images: ProductDetail["images"]) {
@@ -25,6 +26,7 @@ function sortImages(images: ProductDetail["images"]) {
 export function ProductDetailView({
   product,
   whatsappNumber,
+  whatsappConfigured,
 }: ProductDetailViewProps) {
   const images = sortImages(product.images);
   const selection = useProductVariants(product);
@@ -78,6 +80,7 @@ export function ProductDetailView({
         <ProductInfo
           product={product}
           whatsappNumber={whatsappNumber}
+          whatsappConfigured={whatsappConfigured}
           selection={selection}
           onSelectColor={handleSelectColor}
         />

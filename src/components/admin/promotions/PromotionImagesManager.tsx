@@ -1,14 +1,7 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { ImagePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminImageUploadDropzone } from "@/components/admin/AdminImageUploadDropzone";
 import { resolvePublicStorageUrl } from "@/lib/storage-url";
 import type { AdminPromotionImage } from "@/types/admin";
 
@@ -23,30 +16,15 @@ export function PromotionImagesManager({
   isSaving,
   onUpload,
 }: PromotionImagesManagerProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const sortedImages = [...images].sort(
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
   );
 
-  const handleFileChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      await onUpload(file);
-      if (inputRef.current) inputRef.current.value = "";
-    },
-    [onUpload],
-  );
-
   return (
-    <FormItem>
-      <FormLabel className="text-slate-700">Imágenes de la promoción</FormLabel>
-      <FormDescription className="text-slate-500">
-        Sin imagen la promoción no aparecerá en la tienda. Puedes agregar varias;
-        la de menor orden se muestra primero en Home.
-      </FormDescription>
-
+    <AdminFormSection
+      label="Imágenes de la promoción"
+      description="Sin imagen la promoción no aparecerá en la tienda. Puedes agregar varias; la de menor orden se muestra primero en Home."
+    >
       {sortedImages.length > 0 ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {sortedImages.map((image, index) => {
@@ -72,33 +50,15 @@ export function PromotionImagesManager({
         </div>
       ) : (
         <p className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Aún no hay imágenes. Sube al menos una para que se vea en la tienda.
+          Aún no hay imágenes. Arrastra o selecciona al menos una para que se
+          vea en la tienda.
         </p>
       )}
 
-      <FormControl>
-        <div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={isSaving}
-            onChange={(event) => void handleFileChange(event)}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isSaving}
-            onClick={() => inputRef.current?.click()}
-            className="border-slate-200 bg-white"
-          >
-            <ImagePlus className="size-4" />
-            Subir imagen
-          </Button>
-        </div>
-      </FormControl>
-    </FormItem>
+      <AdminImageUploadDropzone
+        onUpload={onUpload}
+        disabled={isSaving}
+      />
+    </AdminFormSection>
   );
 }

@@ -85,12 +85,14 @@ export function ConfirmDialog({
           <Button
             type="button"
             disabled={busy}
-            variant={variant === "destructive" ? "destructive" : "default"}
-            className={
-              variant === "destructive" && tone === "admin"
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : undefined
-            }
+            variant="default"
+            className={cn(
+              variant === "destructive" &&
+                "!border-transparent !bg-red-600 !text-white hover:!bg-red-700 focus-visible:!ring-red-600/40",
+              variant === "default" &&
+                tone === "admin" &&
+                "bg-vite-purple text-white hover:bg-vite-purple/90",
+            )}
             onClick={() => void handleConfirm()}
           >
             {busy ? "Procesando..." : confirmLabel}

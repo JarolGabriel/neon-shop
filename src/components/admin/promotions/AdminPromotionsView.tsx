@@ -92,8 +92,9 @@ export function AdminPromotionsView() {
 
   const handleToggleActive = useCallback(
     async (promotion: AdminPromotion) => {
+      const isCurrentlyActive = promotion.is_active !== false;
       await patchPromotion(promotion.id, {
-        is_active: promotion.is_active === false,
+        is_active: !isCurrentlyActive,
       });
     },
     [patchPromotion],

@@ -32,6 +32,7 @@ import {
 import { checkoutSchema, type CheckoutInput } from "@/lib/schemas/checkout";
 import {
   buildWhatsAppMessage,
+  openWhatsAppOrder,
   saveLastOrder,
 } from "@/lib/order-utils";
 import {
@@ -39,10 +40,7 @@ import {
   getStockWarningMessage,
   hasBlockingStockWarnings,
 } from "@/lib/stock-utils";
-import {
-  normalizeWhatsappNumber,
-  WHATSAPP_FALLBACK,
-} from "@/lib/whatsapp-utils";
+import { getWhatsappNumberFromSettings } from "@/lib/whatsapp-utils";
 
 interface CheckoutModalProps {
   open: boolean;
@@ -54,7 +52,7 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
   const { user } = useAuth();
   const { items, itemCount, savingsAmount, total, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState(WHATSAPP_FALLBACK);
+  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
 
   const form = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
@@ -87,13 +85,10 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
     getSiteSettings()
       .then((settings) => {
         if (!mounted) return;
-        const number = normalizeWhatsappNumber(
-          settings.whatsapp_number ?? "",
-        );
-        if (number) setWhatsappNumber(number);
+        setWhatsappNumber(getWhatsappNumberFromSettings(settings));
       })
       .catch(() => {
-        if (mounted) setWhatsappNumber(WHATSAPP_FALLBACK);
+        if (mounted) setWhatsappNumber(null);
       });
 
     return () => {
@@ -114,6 +109,11 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
           ? getStockWarningMessage(blocker)
           : "Hay productos sin stock suficiente en tu carrito.",
       );
+      return;
+    }
+
+    if (!whatsappNumber) {
+      toast.error("WhatsApp no configurado. Contacta al taller por otro medio.");
       return;
     }
 
@@ -145,7 +145,12 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
 
       clearCart();
       onOpenChange(false);
-      toast.success("¡Pedido confirmado! Revisa los detalles en la siguiente pantalla.");
+      const opened = openWhatsAppOrder(whatsappNumber, message);
+      toast.success(
+        opened
+          ? "¡Pedido confirmado! Pulsa Enviar en WhatsApp para que llegue al taller."
+          : "¡Pedido confirmado! Abre WhatsApp desde la pantalla de confirmación.",
+      );
       router.push("/mi-pedido");
     } catch (error) {
       const message =

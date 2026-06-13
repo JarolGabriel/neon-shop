@@ -2,6 +2,12 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 import { Database } from "@/types/supabase";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+
 // Obtenemos el tipo de fila de la tabla site_settings
 type SiteSettingRow = Database["public"]["Tables"]["site_settings"]["Row"];
 
@@ -21,7 +27,10 @@ export async function GET() {
       {} as Record<string, string>,
     );
 
-    return NextResponse.json({ success: true, data: settings });
+    return NextResponse.json(
+      { success: true, data: settings },
+      { status: 200, headers: NO_CACHE_HEADERS },
+    );
   } catch (error: unknown) {
     console.error("Error fetching settings:", error);
     return NextResponse.json(

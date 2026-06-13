@@ -6,17 +6,16 @@ export function ProductCatalogHelp() {
       <Info className="mt-0.5 size-4 shrink-0 text-vite-purple" />
       <div className="space-y-1">
         <p>
-          <strong>Un solo tamaño y color:</strong> elige tamaño y color arriba y
-          deja la sección de abajo vacía.
+          <strong>Tamaños y colores del producto</strong> (arriba) es lo normal:
+          mismas opciones en la tienda con el mismo precio y stock del producto.
         </p>
         <p>
-          <strong>Varios tamaños y colores:</strong> en la sección de abajo marca
-          todos los tamaños y colores que ofreces y pulsa &quot;Generar
-          combinaciones&quot; (ej. Pequeño + Mediano + Grande × Rosa + Azul = 6
-          variantes).
+          <strong>Precio o stock por combinación</strong> (sección opcional abajo)
+          solo si Grande cuesta más, Rosa tiene otro stock, etc.
         </p>
         <p>
-          El cliente verá botones de tamaño y color en la ficha del producto.
+          Si no abres la sección opcional, no se crean variantes en la base de
+          datos.
         </p>
       </div>
     </div>

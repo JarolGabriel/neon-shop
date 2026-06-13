@@ -21,6 +21,58 @@ function sanitizeColorHex(hex: unknown): string | null {
   return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : null;
 }
 
+function parseAvailableSizes(input: unknown): string[] {
+  if (Array.isArray(input)) {
+    return [
+      ...new Set(
+        input
+          .filter((value): value is string => typeof value === "string")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  if (typeof input === "string" && input.trim()) {
+    try {
+      return parseAvailableSizes(JSON.parse(input));
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function parseAvailableColors(
+  input: unknown,
+): Array<{ label: string; hex: string }> {
+  let raw: unknown = input;
+
+  if (typeof input === "string" && input.trim()) {
+    try {
+      raw = JSON.parse(input);
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(raw)) return [];
+
+  const map = new Map<string, { label: string; hex: string }>();
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as { label?: unknown; hex?: unknown };
+    const label = typeof record.label === "string" ? record.label.trim() : "";
+    const hex = sanitizeColorHex(record.hex);
+    if (!label || !hex) continue;
+    map.set(hex.toLowerCase(), { label, hex });
+  }
+
+  return [...map.values()];
+}
+
 // --- GET: Listar productos con filtros, paginación y variantes ---
 export async function GET(request: NextRequest) {
   try {
@@ -131,6 +183,8 @@ export async function POST(request: NextRequest) {
     const category_id = formData.get("category_id") as string;
     const is_active_str = formData.get("is_active") as string;
     const is_featured_str = formData.get("is_featured") as string;
+    const availableSizesStr = formData.get("available_sizes") as string;
+    const availableColorsStr = formData.get("available_colors") as string;
 
     // Datos de imágenes
     const imageFiles = formData.getAll("image") as File[];
@@ -164,6 +218,8 @@ export async function POST(request: NextRequest) {
     const stock = stockStr ? parseInt(stockStr, 10) : 0;
     const is_active = is_active_str !== "false";
     const is_featured = is_featured_str === "true";
+    const available_sizes = parseAvailableSizes(availableSizesStr);
+    const available_colors = parseAvailableColors(availableColorsStr);
 
     // Procesar variantes si se enviaron en la petición
     let parsedVariants: VariantInput[] = [];
@@ -205,6 +261,8 @@ export async function POST(request: NextRequest) {
           is_featured,
           display_order: 0,
           category_id,
+          available_sizes,
+          available_colors,
         },
       ])
       .select()

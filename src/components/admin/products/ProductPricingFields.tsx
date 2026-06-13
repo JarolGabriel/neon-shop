@@ -123,20 +123,6 @@ export function ProductPricingFields({
 
       <FormField
         control={form.control}
-        name="short_description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-slate-700">Descripción corta</FormLabel>
-            <FormControl>
-              <Input {...field} className={ADMIN_INPUT_CLASS} disabled={isSaving} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
         name="description"
         render={({ field }) => (
           <FormItem>
@@ -144,11 +130,14 @@ export function ProductPricingFields({
             <FormControl>
               <Textarea
                 {...field}
-                rows={3}
+                rows={4}
                 className={ADMIN_TEXTAREA_CLASS}
                 disabled={isSaving}
               />
             </FormControl>
+            <FormDescription className="text-slate-500">
+              Se muestra bajo el precio en la ficha del producto.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

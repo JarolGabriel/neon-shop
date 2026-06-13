@@ -6,6 +6,10 @@ import { ProductDetailView } from "@/components/store/ProductDetailView";
 import { ReviewsSection } from "@/components/store/reviews/ReviewsSection";
 import { MarqueeBanner } from "@/components/ui/marquee-banner";
 import { getProductBySlug, getSiteSettings } from "@/lib/api";
+import {
+  getWhatsappNumberFromSettings,
+  isWhatsappConfigured,
+} from "@/lib/whatsapp-utils";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -58,7 +62,8 @@ export default async function ProductDetailPage({
     <>
       <ProductDetailView
         product={product}
-        whatsappNumber={settings["whatsapp_number"] ?? ""}
+        whatsappNumber={getWhatsappNumberFromSettings(settings)}
+        whatsappConfigured={isWhatsappConfigured(settings)}
       />
       <MarqueeBanner />
       <FeaturesGrid />

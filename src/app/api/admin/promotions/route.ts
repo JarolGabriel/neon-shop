@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase"; // Importa el tipo generado
 
 // Definimos el tipo para lo que se inserta en "promotions"
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    revalidatePath("/");
+    revalidatePath("/comunidad");
 
     return NextResponse.json(data, { status: 201 });
   } catch (error: unknown) {

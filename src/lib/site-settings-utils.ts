@@ -3,7 +3,7 @@ import { FOOTER_SOCIAL_PLATFORMS } from "@/components/shared/footer-icons";
 import type { FooterLinkItem } from "@/components/shared/footer-data";
 import {
   buildWhatsAppUrl,
-  normalizeWhatsappNumber,
+  getWhatsappNumberFromSettings,
 } from "@/lib/whatsapp-utils";
 import { SITE_SETTING_KEYS } from "@/types/site-settings";
 
@@ -35,16 +35,15 @@ export function getBusinessHours(
 export function getWhatsappContact(
   settings: Record<string, string>,
 ): { display: string; href: string } | null {
-  const raw = settings[SITE_SETTING_KEYS.whatsappNumber]?.trim();
-  if (!raw) return null;
-
-  const digits = normalizeWhatsappNumber(raw);
+  const digits = getWhatsappNumberFromSettings(settings);
   if (!digits) return null;
 
-  return {
-    display: raw,
-    href: buildWhatsAppUrl(digits),
-  };
+  const raw = settings[SITE_SETTING_KEYS.whatsappNumber]?.trim();
+  const display = raw || digits;
+  const href = buildWhatsAppUrl(digits);
+  if (!href) return null;
+
+  return { display, href };
 }
 
 export function buildFooterSocialLinks(
