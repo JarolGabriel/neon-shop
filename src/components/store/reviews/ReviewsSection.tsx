@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -9,10 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useProductReviews } from "@/hooks/useProductReviews";
-import {
-  showReviewSubmitErrorToast,
-  showReviewSuccessToast,
-} from "@/lib/review-toasts";
 import type { ReviewFormValues } from "@/lib/schemas/review";
 import { ReviewForm } from "./ReviewForm";
 import { ReviewsList } from "./ReviewsList";
@@ -27,6 +24,9 @@ export function ReviewsSection({ productId }: { productId: string }) {
     values: ReviewFormValues,
     file?: File | null,
   ) {
+    setOpen(false);
+    const toastId = toast.loading("Enviando reseña...");
+
     try {
       await addReview(
         {
@@ -38,13 +38,14 @@ export function ReviewsSection({ productId }: { productId: string }) {
         },
         file,
       );
-      showReviewSuccessToast();
-      setOpen(false);
+      toast.success("¡Reseña publicada!", { id: toastId });
     } catch (err) {
-      showReviewSubmitErrorToast(
+      setOpen(true);
+      toast.error(
         err instanceof Error
           ? err.message
           : "Inténtalo de nuevo en unos momentos.",
+        { id: toastId },
       );
     }
   }
@@ -83,7 +84,7 @@ export function ReviewsSection({ productId }: { productId: string }) {
               obligatorios.
             </DialogDescription>
           </DialogHeader>
-          <ReviewForm onSubmit={handleReviewSubmit} />
+          <ReviewForm onSubmit={handleReviewSubmit} isOpen={open} />
         </DialogContent>
       </Dialog>
     </section>

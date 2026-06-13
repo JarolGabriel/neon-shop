@@ -4,7 +4,8 @@ import { HowItWorksSection } from "@/components/store/HowItWorksSection";
 import { ImageTestimonials } from "@/components/store/ImageTestimonials";
 import { NeonTextCustomizer } from "@/components/store/neon-customizer/NeonTextCustomizer";
 import { ProductTrustSection } from "@/components/store/ProductTrustSection";
-import { RecentlyViewedClient } from "@/components/store/RecentlyViewedClient";
+import { getSiteSettings } from "@/lib/api";
+import { resolveWhatsappNumber } from "@/lib/whatsapp-utils";
 
 export const metadata: Metadata = {
   title: "Personaliza tu Letrero | Neon Shop",
@@ -12,14 +13,16 @@ export const metadata: Metadata = {
     "Diseña tu letrero de neón LED personalizado. Escribe tu texto y recibe tu cotización por WhatsApp.",
 };
 
-export default function PersonalizarPage() {
+export default async function PersonalizarPage() {
+  const settings = await getSiteSettings();
+  const whatsappNumber = resolveWhatsappNumber(settings);
+
   return (
     <>
-      <NeonTextCustomizer />
+      <NeonTextCustomizer whatsappNumber={whatsappNumber} />
       <CustomShowcaseCompare />
       <HowItWorksSection />
       <ImageTestimonials />
-      <RecentlyViewedClient />
       <ProductTrustSection />
     </>
   );

@@ -1,28 +1,26 @@
+import { COMMUNITY_PATH } from "@/lib/community-routes";
+
 export interface FooterLinkItem {
   label: string;
   href: string;
 }
 
 export const CUSTOM_SIGNS_LINKS: FooterLinkItem[] = [
-  { label: "Diseñador de letreros de neón personalizados", href: "#" },
-  { label: "Consigue un presupuesto gratuito", href: "#" },
-  { label: "Pedidos corporativos", href: "#" },
-  { label: "Preguntas frecuentes sobre signos personalizados", href: "#" },
-  { label: "Proyectos destacados", href: "#" },
+  {
+    label: "Diseñador de letreros de neón personalizados",
+    href: "/personalizar",
+  },
+  { label: "Consigue un presupuesto gratuito", href: "/diseno-personalizado" },
+  { label: "Pedidos corporativos", href: "/diseno-personalizado" },
+  { label: "Preguntas frecuentes sobre signos personalizados", href: "/diseno-personalizado" },
+  { label: "Proyectos destacados", href: COMMUNITY_PATH },
 ];
 
 export const NEON_SIGNS_LINKS: FooterLinkItem[] = [
-  { label: "Más vendidos", href: "#" },
-  { label: "Carteles de comida", href: "#" },
-  { label: "Carteles abiertos", href: "#" },
-  { label: "Carteles infantiles", href: "#" },
-];
-
-export const SUPPORT_LINKS: FooterLinkItem[] = [
-  { label: "Política de envío", href: "#" },
-  { label: "Política de reembolsos", href: "#" },
-  { label: "Contáctanos", href: "#" },
-  { label: "Preguntas frecuentes", href: "#" },
+  { label: "Más vendidos", href: "/productos?sort=best_seller" },
+  { label: "Ver catálogo completo", href: "/productos" },
+  { label: "Comunidad Neon", href: COMMUNITY_PATH },
+  { label: "Quiénes somos", href: "/quienes-somos" },
 ];
 
 export const FOOTER_LINK_CLASS =

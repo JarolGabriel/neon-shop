@@ -440,6 +440,56 @@
 }
 
 @layer components {
+  /* Panel admin: fondo claro con tokens y contraste legible (incluye portales) */
+  body[data-admin="true"] {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.45 0 0);
+    --accent: oklch(0.96 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    color: oklch(0.145 0 0);
+  }
+
+  body[data-admin="true"] [data-slot="input"],
+  body[data-admin="true"] [data-slot="textarea"],
+  body[data-admin="true"] [data-slot="select-trigger"] {
+    @apply bg-white text-slate-900 placeholder:text-slate-400;
+  }
+
+  body[data-admin="true"] [data-slot="dropdown-menu-content"],
+  body[data-admin="true"] [data-slot="select-content"],
+  body[data-admin="true"] [data-slot="sheet-content"] {
+    @apply bg-white text-slate-900;
+  }
+
+  body[data-admin="true"] [data-slot="dropdown-menu-item"]:focus,
+  body[data-admin="true"] [data-slot="dropdown-menu-item"][data-highlighted],
+  body[data-admin="true"] [data-slot="select-item"]:focus,
+  body[data-admin="true"] [data-slot="select-item"][data-highlighted] {
+    @apply bg-slate-100! text-slate-900!;
+  }
+
+  body[data-admin="true"] [data-slot="button"][data-variant="ghost"]:hover,
+  body[data-admin="true"] [data-slot="button"][data-variant="outline"]:hover {
+    @apply bg-slate-100! text-slate-900!;
+  }
+
+  .category-media-img {
+    max-width: none !important;
+  }
+
   /* Enlaces interactivos genéricos */
   .nav-interactive {
     @apply text-muted-foreground transition-colors duration-200 ease-in-out hover:bg-transparent hover:text-neon-pink!;

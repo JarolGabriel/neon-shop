@@ -1,5 +1,5 @@
 import type { Tables } from "@/types/supabase";
-import type { AuthUser, SignInResponse, SignUpResponse } from "@/types/auth";
+import type { AuthUser, SignInResponse, SignUpResponse, UserProfile } from "@/types/auth";
 import type {
   CatalogQueryParams,
   CategoryFiltersResponse,
@@ -17,11 +17,32 @@ import type {
   UploadCustomDesignLogoResponse,
 } from "@/types/custom-design";
 import type {
+  CommunityActivityResponse,
+  DeleteShowroomPostResponse,
+} from "@/types/showroom";
+import type {
   CreateReviewPayload,
   ProductReview,
   ProductReviewsResponse,
 } from "@/types/review";
+import type { CartItem, CartResponse, CreateOrderResponse } from "@/types/cart";
+import type {
+  FavoritesResponse,
+  ToggleFavoriteResponse,
+} from "@/types/favorite";
+import type { CreateOrderPayload, MyOrdersResponse } from "@/types/order";
 import type { CustomDesignFormValues } from "@/lib/schemas/custom-design-form";
+import type {
+  ShowroomComment,
+  ShowroomCommentsResponse,
+  ShowroomCreatePostResponse,
+  ShowroomFeedQuery,
+  ShowroomFeedResponse,
+  ShowroomPost,
+  ShowroomReactResponse,
+  ShowroomReactionType,
+} from "@/types/showroom";
+import { SHOWROOM_FEED_PAGE_SIZE } from "@/lib/showroom-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -39,11 +60,70 @@ const AUTH_USER_KEY = "auth_user";
 
 async function parseErrorResponse(res: Response): Promise<string> {
   try {
-    const body = (await res.json()) as { error?: string };
-    return body.error ?? "Error inesperado";
+    const body = (await res.json()) as {
+      error?: string;
+      message?: string;
+      code?: string;
+    };
+
+    if (body.error) return body.error;
+    if (body.message) return body.message;
+
+    if (res.status === 503) {
+      return "El servidor está ocupado. Intenta de nuevo en unos segundos.";
+    }
+
+    return "Error inesperado";
   } catch {
+    if (res.status === 503) {
+      return "El servidor está ocupado. Intenta de nuevo en unos segundos.";
+    }
     return "Error inesperado";
   }
+}
+
+async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+
+  try {
+    res = await fetch(resolveApiUrl(path), init);
+  } catch {
+    throw new Error(
+      "No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.",
+    );
+  }
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<T>;
+}
+
+async function fetchApiWithRetry<T>(
+  path: string,
+  init?: RequestInit,
+  retries = 2,
+): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await fetchApi<T>(path, init);
+    } catch (error) {
+      lastError =
+        error instanceof Error
+          ? error
+          : new Error("No se pudieron cargar los productos. Intenta de nuevo.");
+
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+
+  throw lastError ?? new Error("No se pudieron cargar los productos. Intenta de nuevo.");
 }
 
 export function getStoredAccessToken(): string | null {
@@ -75,11 +155,19 @@ export function clearAuthStorage(): void {
 }
 
 export async function signIn(email: string, password: string): Promise<SignInResponse> {
-  const res = await fetch("/api/auth/sign-in", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  let res: Response;
+
+  try {
+    res = await fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch {
+    throw new Error(
+      "No se pudo conectar con el servidor. Verifica que la app esté corriendo.",
+    );
+  }
 
   if (!res.ok) {
     throw new Error(await parseErrorResponse(res));
@@ -107,8 +195,109 @@ export async function signUp(payload: {
   return res.json() as Promise<SignUpResponse>;
 }
 
+export async function requestPasswordReset(
+  email: string,
+): Promise<{ message: string }> {
+  const res = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<{ message: string }>;
+}
+
+export async function resetPassword(payload: {
+  token_hash: string;
+  password: string;
+}): Promise<{ message: string }> {
+  const res = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<{ message: string }>;
+}
+
 export function signOut(): void {
   clearAuthStorage();
+}
+
+function authHeaders(token: string): HeadersInit {
+  return { Authorization: `Bearer ${token}` };
+}
+
+export async function getProfile(token: string): Promise<{ profile: UserProfile }> {
+  const res = await fetch("/api/profile", {
+    headers: authHeaders(token),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<{ profile: UserProfile }>;
+}
+
+export async function updateProfile(
+  token: string,
+  payload: {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    shipping_address: {
+      street: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      country: string;
+    };
+  },
+): Promise<{ message: string; profile: UserProfile }> {
+  const res = await fetch("/api/profile", {
+    method: "PUT",
+    headers: {
+      ...authHeaders(token),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<{ message: string; profile: UserProfile }>;
+}
+
+export async function uploadProfileAvatar(
+  token: string,
+  file: File,
+): Promise<{ avatar_url: string }> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const res = await fetch("/api/profile/avatar", {
+    method: "POST",
+    headers: authHeaders(token),
+    body: formData,
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<{ avatar_url: string }>;
 }
 
 export type Category = Tables<"categories">;
@@ -116,13 +305,15 @@ export type Category = Tables<"categories">;
 export type CategoryWithCount = Category & { product_count: number };
 
 export async function getCategories(): Promise<Category[]> {
-  const res = await fetch("/api/categories", { cache: "no-store" });
+  return fetchApi<Category[]>("/api/categories", { cache: "no-store" });
+}
 
-  if (!res.ok) {
-    throw new Error("Error al obtener categorías");
-  }
-
-  return res.json() as Promise<Category[]>;
+export async function getFeaturedCategories(): Promise<CategoryWithCount[]> {
+  const { data } = await fetchApi<{ data: CategoryWithCount[] }>(
+    "/api/categories/featured",
+    { cache: "no-store" },
+  );
+  return data;
 }
 
 export async function getCategoriesWithProductCounts(): Promise<
@@ -151,15 +342,9 @@ export async function getCategoriesWithProductCounts(): Promise<
 }
 
 export async function getActivePromotions(): Promise<ActivePromotionsResponse> {
-  const res = await fetch(resolveApiUrl("/api/promotions/active"), {
+  return fetchApi<ActivePromotionsResponse>("/api/promotions/active", {
     next: { revalidate: 60 },
   });
-
-  if (!res.ok) {
-    throw new Error("Error al obtener promociones activas");
-  }
-
-  return res.json() as Promise<ActivePromotionsResponse>;
 }
 
 export async function getProducts(
@@ -181,15 +366,9 @@ export async function getProducts(
   if (params?.out_of_stock) query.set("out_of_stock", "true");
 
   const qs = query.toString();
-  const res = await fetch(`/api/products${qs ? `?${qs}` : ""}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Error al obtener productos");
-  }
-
-  return res.json() as Promise<CatalogProductsResponse>;
+  return fetchApiWithRetry<CatalogProductsResponse>(
+    `/api/products${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function getCategoryFilters(
@@ -222,9 +401,25 @@ export async function getProductBySlug(
   return json.data;
 }
 
+let clientSettingsCache: {
+  data: Record<string, string>;
+  expiresAt: number;
+} | null = null;
+
+const CLIENT_SETTINGS_TTL_MS = 5 * 60 * 1000;
+
 export async function getSiteSettings(): Promise<Record<string, string>> {
+  const isBrowser = typeof window !== "undefined";
+
+  if (isBrowser && clientSettingsCache) {
+    if (Date.now() < clientSettingsCache.expiresAt) {
+      return clientSettingsCache.data;
+    }
+    clientSettingsCache = null;
+  }
+
   const res = await fetch(resolveApiUrl("/api/settings"), {
-    next: { revalidate: 300 },
+    ...(isBrowser ? { cache: "no-store" } : { next: { revalidate: 300 } }),
   });
 
   if (!res.ok) return {};
@@ -233,7 +428,16 @@ export async function getSiteSettings(): Promise<Record<string, string>> {
     success: boolean;
     data?: Record<string, string>;
   };
-  return json.data ?? {};
+  const data = json.data ?? {};
+
+  if (isBrowser) {
+    clientSettingsCache = {
+      data,
+      expiresAt: Date.now() + CLIENT_SETTINGS_TTL_MS,
+    };
+  }
+
+  return data;
 }
 
 export async function getProductReviews(
@@ -257,8 +461,9 @@ export async function getProductReviews(
 export async function createProductReview(
   payload: CreateReviewPayload,
   file?: File | null,
+  accessToken?: string | null,
 ): Promise<ProductReview> {
-  const token = getStoredAccessToken();
+  const token = accessToken ?? getStoredAccessToken();
 
   const formData = new FormData();
   formData.append("product_id", payload.product_id);
@@ -285,54 +490,21 @@ export async function createProductReview(
   return json.data;
 }
 
-/** Adapta un ProductDetail (de /api/products/[slug]) al shape de tarjeta de catálogo. */
-function toCatalogProduct(product: ProductDetail): CatalogProduct {
-  return {
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    short_description: product.short_description,
-    description: product.description,
-    price: product.price,
-    compare_at_price: product.compare_at_price,
-    stock: product.stock,
-    color: product.color,
-    size: product.size,
-    sales_count: product.sales_count,
-    is_active: product.is_active,
-    categories: null,
-    product_images: product.images.map(
-      ({ id, image_url, alt_text, is_primary }) => ({
-        id,
-        image_url,
-        alt_text,
-        is_primary,
-      }),
-    ),
-    product_variants: product.variants.map(
-      ({ id, color, color_hex, size, price, stock, is_active }) => ({
-        id,
-        color,
-        color_hex,
-        size,
-        price,
-        stock,
-        is_active,
-      }),
-    ),
-  };
-}
-
 export async function getProductsBySlugs(
   slugs: string[],
 ): Promise<CatalogProduct[]> {
-  const results = await Promise.all(
-    slugs.map((slug) => getProductBySlug(slug).catch(() => null)),
+  if (slugs.length === 0) return [];
+
+  const unique = [...new Set(slugs)].slice(0, 12);
+  const qs = new URLSearchParams({ slugs: unique.join(",") });
+  const { data } = await fetchApiWithRetry<{ data: CatalogProduct[] }>(
+    `/api/products?${qs.toString()}`,
   );
 
-  return results
-    .filter((product): product is ProductDetail => product != null)
-    .map(toCatalogProduct);
+  const bySlug = new Map(data.map((product) => [product.slug, product]));
+  return unique
+    .map((slug) => bySlug.get(slug))
+    .filter((product): product is CatalogProduct => product != null);
 }
 
 export function getCartSessionId(): string {
@@ -434,3 +606,271 @@ export async function uploadTextDesign(
 
   return res.json() as Promise<CreateTextDesignResponse>;
 }
+
+export async function getCart(): Promise<CartItem[]> {
+  const sessionId = getCartSessionId();
+  const { data } = await fetchApi<CartResponse>(
+    `/api/cart?session_id=${encodeURIComponent(sessionId)}`,
+    { cache: "no-store" },
+  );
+  return data;
+}
+
+export async function removeCartItem(itemId: string): Promise<void> {
+  const sessionId = getCartSessionId();
+  const res = await fetch(
+    resolveApiUrl(
+      `/api/cart/items/${encodeURIComponent(itemId)}?session_id=${encodeURIComponent(sessionId)}`,
+    ),
+    { method: "DELETE" },
+  );
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+}
+
+export async function updateCartItem(
+  itemId: string,
+  payload: { quantity: number; notes?: string | null },
+): Promise<void> {
+  const sessionId = getCartSessionId();
+  const body: {
+    quantity: number;
+    session_id: string;
+    notes?: string | null;
+  } = {
+    quantity: payload.quantity,
+    session_id: sessionId,
+  };
+
+  if (payload.notes !== undefined) {
+    body.notes = payload.notes;
+  }
+
+  const res = await fetch(
+    resolveApiUrl(`/api/cart/items/${encodeURIComponent(itemId)}`),
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+}
+
+export async function getMyOrders(token: string): Promise<MyOrdersResponse> {
+  const res = await fetch(resolveApiUrl("/api/orders/me"), {
+    headers: authHeaders(token),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<MyOrdersResponse>;
+}
+
+export async function getFavorites(token: string): Promise<FavoritesResponse> {
+  const res = await fetch(resolveApiUrl("/api/favorites"), {
+    headers: authHeaders(token),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<FavoritesResponse>;
+}
+
+export async function toggleFavorite(
+  token: string,
+  productId: string,
+): Promise<ToggleFavoriteResponse> {
+  const res = await fetch(resolveApiUrl("/api/favorites"), {
+    method: "POST",
+    headers: authJsonHeaders(token),
+    body: JSON.stringify({ product_id: productId }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<ToggleFavoriteResponse>;
+}
+
+export async function createOrder(
+  payload: CreateOrderPayload,
+): Promise<CreateOrderResponse> {
+  const res = await fetch(resolveApiUrl("/api/orders"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const body = (await res.json()) as CreateOrderResponse & {
+    message?: string;
+  };
+
+  if (!res.ok || !body.success) {
+    throw new Error(body.message ?? "No se pudo crear el pedido");
+  }
+
+  return body;
+}
+
+function authJsonHeaders(token: string): HeadersInit {
+  return {
+    ...authHeaders(token),
+    "Content-Type": "application/json",
+  };
+}
+
+export async function getShowroomPosts(
+  token?: string | null,
+  params?: ShowroomFeedQuery,
+): Promise<ShowroomFeedResponse> {
+  const headers: HeadersInit = token ? authHeaders(token) : {};
+  const query = new URLSearchParams();
+
+  query.set("page", String(params?.page ?? 1));
+  query.set("limit", String(params?.limit ?? SHOWROOM_FEED_PAGE_SIZE));
+  query.set("sort", params?.sort ?? "latest");
+
+  return fetchApiWithRetry<ShowroomFeedResponse>(
+    `/api/showroom?${query.toString()}`,
+    {
+      headers,
+      cache: "no-store",
+    },
+  );
+}
+
+export async function createShowroomPost(
+  token: string,
+  payload: {
+    title: string;
+    comment: string;
+    rating: number;
+    file?: File | null;
+  },
+): Promise<ShowroomCreatePostResponse> {
+  const formData = new FormData();
+  formData.append("title", payload.title);
+  formData.append("comment", payload.comment);
+  formData.append("rating", String(payload.rating));
+
+  if (payload.file) {
+    formData.append("file", payload.file);
+  }
+
+  const res = await fetch(resolveApiUrl("/api/showroom"), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: formData,
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<ShowroomCreatePostResponse>;
+}
+
+export async function reactToShowroomPost(
+  token: string,
+  reviewId: string,
+  reactionType: ShowroomReactionType = "like",
+): Promise<ShowroomReactResponse> {
+  const res = await fetch(resolveApiUrl("/api/showroom/react"), {
+    method: "POST",
+    headers: authJsonHeaders(token),
+    body: JSON.stringify({
+      review_id: reviewId,
+      reaction_type: reactionType,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<ShowroomReactResponse>;
+}
+
+export async function getShowroomComments(
+  reviewId: string,
+): Promise<ShowroomComment[]> {
+  const { data } = await fetchApi<ShowroomCommentsResponse>(
+    `/api/showroom/comments?review_id=${encodeURIComponent(reviewId)}`,
+    { cache: "no-store" },
+  );
+
+  return data;
+}
+
+export async function deleteShowroomPost(
+  token: string,
+  reviewId: string,
+): Promise<DeleteShowroomPostResponse> {
+  const res = await fetch(resolveApiUrl(`/api/showroom/${reviewId}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  return res.json() as Promise<DeleteShowroomPostResponse>;
+}
+
+export async function getMyCommunityActivity(
+  token: string,
+): Promise<CommunityActivityResponse> {
+  return fetchApiWithRetry<CommunityActivityResponse>("/api/showroom/me", {
+    headers: authHeaders(token),
+    cache: "no-store",
+  });
+}
+
+export async function createShowroomComment(
+  token: string,
+  reviewId: string,
+  comment: string,
+): Promise<{ message: string }> {
+  const res = await fetch(resolveApiUrl("/api/showroom/comments"), {
+    method: "POST",
+    headers: authJsonHeaders(token),
+    body: JSON.stringify({ review_id: reviewId, comment }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorResponse(res));
+  }
+
+  const body = (await res.json()) as { message: string };
+  return body;
+}
+
+// ——— Admin API ———
+export {
+  createAdminCategory,
+  createAdminSetting,
+  deleteAdminCategory,
+  deleteAdminSetting,
+  getAdminCategories,
+  getAdminModeration,
+  getAdminOrders,
+  getAdminSettings,
+  patchAdminModeration,
+  patchAdminOrder,
+  patchAdminSetting,
+  updateAdminCategory,
+} from "@/lib/admin-api";

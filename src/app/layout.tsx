@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import { PublicStoreChrome } from "@/components/layout/PublicStoreChrome";
 import { Footer } from "@/components/shared/Footer";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -36,10 +38,14 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <AuthProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <Toaster position="top-center" richColors closeButton offset={80} />
+            <FavoritesProvider>
+              <CartProvider>
+                <PublicStoreChrome footer={<Footer />}>
+                  {children}
+                </PublicStoreChrome>
+                <Toaster position="top-center" richColors closeButton offset={80} />
+              </CartProvider>
+            </FavoritesProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

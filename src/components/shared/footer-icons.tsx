@@ -1,7 +1,15 @@
-import { MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SITE_SETTING_KEYS } from "@/types/site-settings";
+import type { SiteSettingKey } from "@/types/site-settings";
+import type { ComponentType } from "react";
 
 type SocialIconProps = { className?: string };
+
+export interface FooterSocialPlatform {
+  settingKey: SiteSettingKey;
+  label: string;
+  Icon: ComponentType<SocialIconProps>;
+}
 
 export function FacebookIcon({ className }: SocialIconProps) {
   return (
@@ -29,6 +37,19 @@ export function InstagramIcon({ className }: SocialIconProps) {
   );
 }
 
+export function YouTubeIcon({ className }: SocialIconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={cn("size-5", className)}
+      aria-hidden
+    >
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
 export function TikTokIcon({ className }: SocialIconProps) {
   return (
     <svg
@@ -42,9 +63,25 @@ export function TikTokIcon({ className }: SocialIconProps) {
   );
 }
 
-export const SOCIAL_LINKS = [
-  { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "Instagram", href: "#", Icon: InstagramIcon },
-  { label: "TikTok", href: "#", Icon: TikTokIcon },
-  { label: "WhatsApp", href: "#", Icon: MessageCircle },
-] as const;
+export const FOOTER_SOCIAL_PLATFORMS: FooterSocialPlatform[] = [
+  {
+    settingKey: SITE_SETTING_KEYS.facebookUrl,
+    label: "Facebook",
+    Icon: FacebookIcon,
+  },
+  {
+    settingKey: SITE_SETTING_KEYS.instagramUrl,
+    label: "Instagram",
+    Icon: InstagramIcon,
+  },
+  {
+    settingKey: SITE_SETTING_KEYS.tiktokUrl,
+    label: "TikTok",
+    Icon: TikTokIcon,
+  },
+  {
+    settingKey: SITE_SETTING_KEYS.youtubeUrl,
+    label: "YouTube",
+    Icon: YouTubeIcon,
+  },
+];

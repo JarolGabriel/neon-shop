@@ -1,15 +1,81 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import {
+  createSupabaseErrorResponse,
+  createUnexpectedErrorResponse,
+} from "@/lib/supabase-errors";
+
+/** Campos mínimos para tarjetas de catálogo (sin description ni joins pesados). */
+const LIST_SELECT = `
+  id,
+  name,
+  slug,
+  short_description,
+  price,
+  compare_at_price,
+  stock,
+  sales_count,
+  is_active,
+  categories (id, name, slug),
+  product_images (id, image_url, alt_text, is_primary),
+  product_variants (id, color, color_hex, size, price, stock, is_active)
+`;
+
+const CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=30, stale-while-revalidate=120",
+};
+
+function jsonWithCache<T>(body: T, status = 200) {
+  return NextResponse.json(body, { status, headers: CACHE_HEADERS });
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Capturar y procesar Query Params de la URL
     const { searchParams } = new URL(request.url);
 
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
+    const slugsParam = searchParams.get("slugs");
+    if (slugsParam) {
+      const slugs = [
+        ...new Set(
+          slugsParam
+            .split(",")
+            .map((slug) => slug.trim())
+            .filter(Boolean),
+        ),
+      ].slice(0, 12);
 
-    // Filtros principales
+      if (slugs.length === 0) {
+        return jsonWithCache({ data: [] });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("products")
+        .select(LIST_SELECT)
+        .eq("is_active", true)
+        .in("slug", slugs);
+
+      if (error) {
+        return createSupabaseErrorResponse(error, {
+          context: "GET /api/products?slugs",
+          fallbackMessage: "Error al obtener productos",
+          databaseMessage: "Error al obtener productos",
+        });
+      }
+
+      const order = new Map(slugs.map((slug, index) => [slug, index]));
+      const sorted = (data ?? []).sort(
+        (a, b) => (order.get(a.slug) ?? 99) - (order.get(b.slug) ?? 99),
+      );
+
+      return jsonWithCache({ data: sorted });
+    }
+
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(
+      30,
+      Math.max(1, parseInt(searchParams.get("limit") || "12", 10) || 12),
+    );
+
     const search = searchParams.get("search") || "";
     const categorySlug = searchParams.get("category") || "";
     const minPrice = searchParams.get("min_price")
@@ -22,49 +88,21 @@ export async function GET(request: NextRequest) {
     const size = searchParams.get("size") || "";
     const inStock = searchParams.get("in_stock") === "true";
     const outOfStock = searchParams.get("out_of_stock") === "true";
-
-    // Ordenamiento (sort)
     const sortBy = searchParams.get("sort") || "newest";
 
-    // Calcular paginación
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // 2. Query base con relaciones estándar
-    let query = supabaseAdmin.from("products").select(
-      `
-        id,
-        name,
-        slug,
-        short_description,
-        description,
-        price,
-        compare_at_price,
-        stock,
-        color,
-        size,
-        sales_count,
-        is_active,
-        categories (id, name, slug),
-        product_images (id, image_url, alt_text, is_primary),
-        product_variants (id, color, color_hex, size, price, stock, is_active)
-      `,
-      { count: "exact" },
-    );
+    let query = supabaseAdmin
+      .from("products")
+      .select(LIST_SELECT, { count: "exact" })
+      .eq("is_active", true);
 
-    // 3. REGLA INQUEBRANTABLE DE NEGOCIO
-    query = query.eq("is_active", true);
-
-    // 4. Construcción dinámica de filtros
-
-    // 🔧 FIX 1: Búsqueda mejorada
-    if (search && search.trim() !== "") {
-      query = query.ilike("name", `%${search}%`);
+    if (search.trim()) {
+      query = query.ilike("name", `%${search.trim()}%`);
     }
 
-    // 🔧 FIX 2: Filtro de categoría
     if (categorySlug) {
-      // Paso 1: Obtener el category_id desde el slug
       const { data: categoryData } = await supabaseAdmin
         .from("categories")
         .select("id")
@@ -72,32 +110,23 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (categoryData) {
-        // Paso 2: Filtrar productos por category_id
         query = query.eq("category_id", categoryData.id);
       } else {
-        return NextResponse.json(
-          {
-            data: [],
-            meta: {
-              total_items: 0,
-              page,
-              limit,
-              total_pages: 0,
-              has_more: false,
-            },
+        return jsonWithCache({
+          data: [],
+          meta: {
+            total_items: 0,
+            page,
+            limit,
+            total_pages: 0,
+            has_more: false,
           },
-          { status: 200 },
-        );
+        });
       }
     }
 
-    if (minPrice !== null) {
-      query = query.gte("price", minPrice);
-    }
-
-    if (maxPrice !== null) {
-      query = query.lte("price", maxPrice);
-    }
+    if (minPrice !== null) query = query.gte("price", minPrice);
+    if (maxPrice !== null) query = query.lte("price", maxPrice);
 
     if (color) {
       const { data: variantProductIds } = await supabaseAdmin
@@ -106,14 +135,22 @@ export async function GET(request: NextRequest) {
         .eq("color_hex", color)
         .eq("is_active", true);
 
-      if (variantProductIds && variantProductIds.length > 0) {
-        const ids = variantProductIds.map((v) => v.product_id);
-        query = query.in("id", ids);
-      } else {
-        return NextResponse.json(
-          { data: [], meta: { total_items: 0, page, limit, total_pages: 0, has_more: false } },
-          { status: 200 }
+      if (variantProductIds?.length) {
+        query = query.in(
+          "id",
+          variantProductIds.map((v) => v.product_id),
         );
+      } else {
+        return jsonWithCache({
+          data: [],
+          meta: {
+            total_items: 0,
+            page,
+            limit,
+            total_pages: 0,
+            has_more: false,
+          },
+        });
       }
     }
 
@@ -124,14 +161,22 @@ export async function GET(request: NextRequest) {
         .eq("size", size)
         .eq("is_active", true);
 
-      if (variantProductIds && variantProductIds.length > 0) {
-        const ids = variantProductIds.map((v) => v.product_id);
-        query = query.in("id", ids);
-      } else {
-        return NextResponse.json(
-          { data: [], meta: { total_items: 0, page, limit, total_pages: 0, has_more: false } },
-          { status: 200 }
+      if (variantProductIds?.length) {
+        query = query.in(
+          "id",
+          variantProductIds.map((v) => v.product_id),
         );
+      } else {
+        return jsonWithCache({
+          data: [],
+          meta: {
+            total_items: 0,
+            page,
+            limit,
+            total_pages: 0,
+            has_more: false,
+          },
+        });
       }
     }
 
@@ -141,7 +186,6 @@ export async function GET(request: NextRequest) {
       query = query.gt("stock", 0);
     }
 
-    // 5. Estrategia de Ordenamiento profesional
     switch (sortBy) {
       case "price_asc":
         query = query.order("price", { ascending: true });
@@ -158,36 +202,34 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    // 6. Ejecutar Query con Paginación final
     const { data: products, error, count } = await query.range(from, to);
 
     if (error) {
-      console.error("Error de Supabase al filtrar productos:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return createSupabaseErrorResponse(error, {
+        context: "GET /api/products",
+        fallbackMessage: "Error al obtener productos",
+        databaseMessage: "Error al obtener productos",
+      });
     }
 
-    // 7. Formatear la respuesta con Metadatos limpios
     const totalItems = count || 0;
     const totalPages = Math.ceil(totalItems / limit);
 
-    return NextResponse.json(
-      {
-        data: products,
-        meta: {
-          total_items: totalItems,
-          page,
-          limit,
-          total_pages: totalPages,
-          has_more: page < totalPages,
-        },
+    return jsonWithCache({
+      data: products,
+      meta: {
+        total_items: totalItems,
+        page,
+        limit,
+        total_pages: totalPages,
+        has_more: page < totalPages,
       },
-      { status: 200 },
-    );
+    });
   } catch (error) {
-    console.error("Error crítico en el catálogo público de productos:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor al procesar el catálogo" },
-      { status: 500 },
+    return createUnexpectedErrorResponse(
+      "GET /api/products",
+      error,
+      "Error interno del servidor al procesar el catálogo",
     );
   }
 }

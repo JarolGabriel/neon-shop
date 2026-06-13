@@ -53,11 +53,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { session, user: authenticatedUser } = await apiSignIn(email, password);
+    const { session, user: authenticatedUser } = await apiSignIn(
+      email.trim().toLowerCase(),
+      password,
+    );
 
-    persistAuth(session, authenticatedUser);
+    const user: AuthUser = {
+      ...authenticatedUser,
+      phone: authenticatedUser.phone ?? null,
+      avatar_url: authenticatedUser.avatar_url ?? null,
+    };
+
+    persistAuth(session, user);
     setAccessToken(session.access_token);
-    setUser(authenticatedUser);
+    setUser(user);
   }, []);
 
   const signOut = useCallback(() => {

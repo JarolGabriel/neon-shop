@@ -8,7 +8,7 @@ export const STORE_NAV_ITEMS: NavItem[] = [
   { label: "Cumpleaños", href: "/productos?category=cumpleanos" },
   { label: "Bodas", href: "/productos?category=bodas" },
   { label: "Negocios", href: "/productos?category=negocios" },
-  { label: "Favoritos", href: "/productos?category=favoritos" },
+  { label: "Favoritos", href: "/favoritos" },
   { label: "Ver Todo", href: "/productos" },
 ];
 

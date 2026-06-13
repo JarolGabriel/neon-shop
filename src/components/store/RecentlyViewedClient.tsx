@@ -5,6 +5,7 @@ import { RecentProductsSkeleton } from "@/components/store/RecentProductsSkeleto
 import { RecentlyViewed } from "@/components/store/RecentlyViewed";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { getProductsBySlugs } from "@/lib/api";
+import { runAfterPageReady } from "@/lib/defer-client-request";
 import type { CatalogProduct } from "@/types/product";
 
 export function RecentlyViewedClient({
@@ -28,19 +29,22 @@ export function RecentlyViewedClient({
     let active = true;
     setIsLoading(true);
 
-    getProductsBySlugs(slugs)
-      .then((data) => {
-        if (active) setProducts(data);
-      })
-      .catch(() => {
-        if (active) setProducts([]);
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
+    const cancelDeferred = runAfterPageReady(() => {
+      getProductsBySlugs(slugs)
+        .then((data) => {
+          if (active) setProducts(data);
+        })
+        .catch(() => {
+          if (active) setProducts([]);
+        })
+        .finally(() => {
+          if (active) setIsLoading(false);
+        });
+    }, 1500);
 
     return () => {
       active = false;
+      cancelDeferred();
     };
   }, [ready, slugs]);
 

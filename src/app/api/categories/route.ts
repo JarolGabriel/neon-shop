@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import {
+  createSupabaseErrorResponse,
+  createUnexpectedErrorResponse,
+} from "@/lib/supabase-errors";
 
 // GET /api/categories
 export async function GET() {
@@ -10,16 +14,19 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching categories:", error);
-      return NextResponse.json(
-        { error: "Error al obtener categorías" },
-        { status: 500 },
-      );
+      return createSupabaseErrorResponse(error, {
+        context: "GET /api/categories",
+        fallbackMessage: "Error al obtener categorías",
+        databaseMessage: "Error al obtener categorías",
+      });
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Error inesperado" }, { status: 500 });
+    return createUnexpectedErrorResponse(
+      "GET /api/categories",
+      error,
+      "Error inesperado al obtener categorías",
+    );
   }
 }

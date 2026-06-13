@@ -1,5 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import {
+  createSupabaseErrorResponse,
+  createUnexpectedErrorResponse,
+} from "@/lib/supabase-errors";
 
 // 1. GET /api/cart -> OBTENER EL CARRITO
 
@@ -15,7 +19,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Consulta usando tu cliente unificado y haciendo los JOINs correspondientes
     const { data: cartItems, error } = await supabaseAdmin
       .from("cart_items")
       .select(
@@ -31,7 +34,13 @@ export async function GET(request: NextRequest) {
           name,
           slug,
           price,
-          short_description
+          short_description,
+          product_images (
+            id,
+            image_url,
+            alt_text,
+            is_primary
+          )
         ),
         product_variants (
           id,
@@ -46,16 +55,19 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error al obtener el carrito:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return createSupabaseErrorResponse(error, {
+        context: "GET /api/cart",
+        fallbackMessage: "Error al obtener el carrito",
+        databaseMessage: "Error al obtener el carrito",
+      });
     }
 
     return NextResponse.json({ data: cartItems }, { status: 200 });
   } catch (error) {
-    console.error("Error crítico en GET /api/cart:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+    return createUnexpectedErrorResponse(
+      "GET /api/cart",
+      error,
+      "Error interno del servidor",
     );
   }
 }

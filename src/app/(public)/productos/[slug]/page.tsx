@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { BackToTop } from "@/components/store/BackToTop";
 import { FeaturesGrid } from "@/components/store/FeaturesGrid";
 import { ProductDetailView } from "@/components/store/ProductDetailView";
-import { RecentlyViewedClient } from "@/components/store/RecentlyViewedClient";
 import { ReviewsSection } from "@/components/store/reviews/ReviewsSection";
 import { MarqueeBanner } from "@/components/ui/marquee-banner";
 import { getProductBySlug, getSiteSettings } from "@/lib/api";
@@ -64,7 +63,6 @@ export default async function ProductDetailPage({
       <MarqueeBanner />
       <FeaturesGrid />
       <ReviewsSection productId={product.id} />
-      <RecentlyViewedClient currentSlug={product.slug} />
       <BackToTop />
     </>
   );

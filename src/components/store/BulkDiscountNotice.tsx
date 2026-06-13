@@ -5,8 +5,8 @@ export function BulkDiscountNotice() {
         🚨 ¡AHORRA AÚN MÁS! 🚨
       </p>
       <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-        Compra 2 o más carteles de neón LED en nuestra tienda y recibe
-        automáticamente un 10% adicional de descuento al pagar.
+        2 letreros: 10% de descuento automático. 3 o más: 15% de descuento al
+        confirmar tu pedido.
       </p>
     </div>
   );

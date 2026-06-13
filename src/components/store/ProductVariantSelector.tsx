@@ -65,21 +65,39 @@ export function ProductVariantSelector({
           <div className="flex flex-wrap gap-2.5">
             {colors.map((color) => {
               const active = color.key === selectedColorKey;
+              const label = color.color ?? "Color";
+
+              if (!color.colorHex) {
+                return (
+                  <button
+                    key={color.key}
+                    type="button"
+                    onClick={() => onSelectColor(color.key)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs transition-colors duration-200",
+                      active
+                        ? "border-vite-purple bg-vite-purple/10 font-medium text-foreground dark:border-cyber-yellow dark:bg-cyber-yellow/10"
+                        : "border-border text-muted-foreground hover:border-vite-purple/60 hover:text-foreground dark:hover:border-cyber-yellow/60",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={color.key}
                   type="button"
                   onClick={() => onSelectColor(color.key)}
-                  title={color.color ?? undefined}
-                  aria-label={color.color ?? "Color"}
+                  title={label}
+                  aria-label={label}
                   className={cn(
                     "size-8 rounded-full border border-border transition-transform duration-200 hover:scale-110",
                     active &&
                       "ring-2 ring-vite-purple ring-offset-2 ring-offset-background dark:ring-cyber-yellow",
                   )}
-                  style={
-                    color.colorHex ? { backgroundColor: color.colorHex } : undefined
-                  }
+                  style={{ backgroundColor: color.colorHex }}
                 />
               );
             })}

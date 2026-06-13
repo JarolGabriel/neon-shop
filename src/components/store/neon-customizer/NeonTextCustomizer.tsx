@@ -28,7 +28,6 @@ import {
   RGB_CYCLE,
   SIZE_OPTIONS,
   SPECIAL_EFFECTS,
-  WHATSAPP_NUMBER,
   getFontSize,
   getNeonStyle,
   getSizeLabel,
@@ -40,10 +39,13 @@ import {
   neonTextFormSchema,
   type NeonTextFormValues,
 } from "@/lib/schemas/neon-text-form";
+import { buildWhatsAppUrl } from "@/lib/whatsapp-utils";
 
+interface NeonTextCustomizerProps {
+  whatsappNumber: string;
+}
 
-
-export function NeonTextCustomizer() {
+export function NeonTextCustomizer({ whatsappNumber }: NeonTextCustomizerProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -415,10 +417,7 @@ export function NeonTextCustomizer() {
         `🖼️ Vista previa: ${previewUrl}`,
       ].join("\n");
 
-      window.open(
-        `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`,
-        "_blank",
-      );
+      window.open(buildWhatsAppUrl(whatsappNumber, mensaje), "_blank");
     } catch {
       if (allAnimated) {
         allAnimated.forEach((el) => {

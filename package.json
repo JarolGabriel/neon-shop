@@ -6,7 +6,9 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:showroom": "node scripts/seed-showroom-posts.mjs",
+    "seed:showroom:clean": "node scripts/clean-showroom-seed.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -26,6 +28,8 @@
     "react-dom": "19.2.4",
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.75.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.12.3",
     "shadcn": "^4.7.0",
     "sonner": "^2.0.7",

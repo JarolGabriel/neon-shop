@@ -1,5 +1,8 @@
-// /home/jarol/projects/neon-shop/src/app/api/promotions/active/route.ts
 import { supabaseAdmin } from "@/lib/supabase";
+import {
+  buildSupabaseErrorPayload,
+  createUnexpectedErrorResponse,
+} from "@/lib/supabase-errors";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -14,26 +17,30 @@ export async function GET() {
         promotion_images (*)
       `,
       )
-      // 1. CONDICIÓN MAESTRA:
       .eq("is_active", true)
-
-      // 2. FILTRO DE FECHAS FLEXIBLE:
-
       .or(
         `and(start_date.lte.${now},end_date.gte.${now}),and(start_date.is.null,end_date.is.null)`,
       )
-
-      // 3. Ordenamos por la prioridad asignada
       .order("display_order", { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      const { body, status, headers } = buildSupabaseErrorPayload(error, {
+        context: "GET /api/promotions/active",
+        fallbackMessage: "Error al cargar promociones",
+        databaseMessage: "Error al cargar promociones",
+      });
+      return NextResponse.json(
+        { success: false, message: body.error, code: body.code },
+        { status, headers },
+      );
+    }
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error cargando promociones activas:", error);
-    return NextResponse.json(
-      { success: false, message: "Error al cargar promociones" },
-      { status: 500 },
+    return createUnexpectedErrorResponse(
+      "GET /api/promotions/active",
+      error,
+      "Error al cargar promociones",
     );
   }
 }

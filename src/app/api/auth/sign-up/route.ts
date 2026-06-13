@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+import {
+  buildWelcomeEmailHtml,
+  getResendFromAddress,
+  getSiteBaseUrl,
+} from "@/lib/auth-emails";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,6 +86,20 @@ export async function POST(request: NextRequest) {
         },
         { status: 500 },
       );
+    }
+
+    try {
+      const catalogUrl = `${getSiteBaseUrl()}/productos`;
+      const fromAddress = await getResendFromAddress();
+
+      await resend.emails.send({
+        from: fromAddress,
+        to: email,
+        subject: `🎉 ¡Bienvenido a Neon Shop, ${first_name || "cliente"}!`,
+        html: buildWelcomeEmailHtml(first_name || "cliente", catalogUrl),
+      });
+    } catch (emailError) {
+      console.error("Error enviando correo de bienvenida:", emailError);
     }
 
     return NextResponse.json(
