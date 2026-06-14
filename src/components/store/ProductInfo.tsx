@@ -59,6 +59,7 @@ export function ProductInfo({
 
   const {
     currentPrice,
+    currentCompareAtPrice,
     selectedVariant,
     selectedSize,
     colors,
@@ -67,7 +68,7 @@ export function ProductInfo({
     usesAdvancedVariants,
     sizes,
   } = selection;
-  const compareAt = product.compare_at_price;
+  const compareAt = currentCompareAtPrice;
   const discount = getDiscountPercent(currentPrice, compareAt);
   const selectedColorName =
     colors.find((c) => c.key === selectedColorKey)?.color ?? null;

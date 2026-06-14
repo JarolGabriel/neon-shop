@@ -1,8 +1,11 @@
-import { NEON_COLORS, SIZE_OPTIONS } from "@/lib/neon-customizer-config";
+import { NEON_COLORS } from "@/lib/neon-customizer-config";
+import {
+  getPriceForSize,
+  getProductSizeLabel,
+  PRODUCT_SIZE_PRESETS,
+} from "@/lib/product-size-pricing";
 
-export { NEON_COLORS };
-
-export const PRODUCT_SIZE_PRESETS = SIZE_OPTIONS;
+export { NEON_COLORS, getProductSizeLabel, PRODUCT_SIZE_PRESETS };
 
 export const CUSTOM_SIZE_VALUE = "__custom__";
 
@@ -23,14 +26,6 @@ export function normalizeCustomSize(input: string): string {
   if (!trimmed) return "";
   if (trimmed.startsWith("custom:")) return trimmed;
   return `custom:${trimmed}`;
-}
-
-export function getProductSizeLabel(size: string | null | undefined): string {
-  if (!size) return "";
-  if (size.startsWith("custom:")) return size.slice("custom:".length);
-  return (
-    PRODUCT_SIZE_PRESETS.find((preset) => preset.value === size)?.label ?? size
-  );
 }
 
 function randomSkuSuffix(): string {
@@ -151,7 +146,7 @@ export function normalizeVariantForSubmit(
     sku:
       variant.sku?.trim() ||
       generateVariantSku(productSlug, size || undefined, color || undefined),
-    price: variant.price ?? basePrice,
+    price: variant.price ?? getPriceForSize(size) ?? basePrice,
     stock: variant.stock ?? 0,
     is_active: variant.is_active ?? true,
   };
@@ -192,7 +187,7 @@ export function buildVariantCombinations(
         size: normalizedSize,
         color: normalizedColor,
         color_hex: color_hex,
-        price: basePrice > 0 ? basePrice : undefined,
+        price: getPriceForSize(normalizedSize) ?? (basePrice > 0 ? basePrice : undefined),
         stock: baseStock,
         is_active: true,
       });

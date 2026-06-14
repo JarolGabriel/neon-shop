@@ -1,10 +1,5 @@
 export type DesignType = "logo_upload" | "text_design";
-export type PreferredSize =
-  | "pequeno"
-  | "mediano"
-  | "grande"
-  | "personalizado"
-  | null;
+export type PreferredSize = string | null;
 export type CustomDesignStatus =
   | "pendiente"
   | "cotizacion_enviada"

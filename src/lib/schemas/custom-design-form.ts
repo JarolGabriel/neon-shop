@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ALL_PRODUCT_SIZE_VALUES } from "@/lib/product-size-pricing";
 
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
@@ -9,15 +10,16 @@ const ALLOWED_FILE_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+const preferredSizeEnum = z.enum(
+  ALL_PRODUCT_SIZE_VALUES as [string, ...string[]],
+  { message: "Elige un tamaño aproximado" },
+);
+
 export const customDesignFormSchema = z.object({
   preferred_size: z
     .string()
     .min(1, "Elige un tamaño aproximado")
-    .pipe(
-      z.enum(["pequeno", "mediano", "grande", "xl", "xxl"], {
-        message: "Elige un tamaño aproximado",
-      }),
-    ),
+    .pipe(preferredSizeEnum),
   budget_range: z
     .string()
     .min(1, "Elige un presupuesto estimado")

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { getProductSizeLabel } from "@/lib/product-catalog-options"
+import { getPricesForSizes, resolveCompareAtPrice } from "@/lib/product-size-pricing"
 import type {
   CatalogProduct,
   CatalogProductVariant,
@@ -64,14 +65,34 @@ export function getProductDisplayPrice(product: CatalogProduct): {
     (v) => v.is_active !== false,
   )
   const variantPrices = activeVariants.map((v) => v.price)
+  const uniqueVariantPrices = [...new Set(variantPrices)]
 
   const minVariantPrice =
-    variantPrices.length > 0 ? Math.min(...variantPrices) : null
+    uniqueVariantPrices.length > 0 ? Math.min(...uniqueVariantPrices) : null
+
+  const availableSizes = "available_sizes" in product
+    ? (product as CatalogProduct & { available_sizes?: string[] }).available_sizes
+    : undefined
+  const tierPrices = getPricesForSizes(availableSizes ?? [])
+  const minTierPrice =
+    tierPrices.length > 0 ? Math.min(...tierPrices) : null
+
+  const candidates = [minVariantPrice, minTierPrice, product.price].filter(
+    (value): value is number => value != null,
+  )
+  const price = candidates.length > 0 ? Math.min(...candidates) : product.price
+
+  const hasMultipleVariantPrices = uniqueVariantPrices.length > 1
+  const hasMultipleTierPrices = tierPrices.length > 1
+  const compareAtPrice = resolveCompareAtPrice(
+    price,
+    product.compare_at_price,
+  )
 
   return {
-    price: minVariantPrice ?? product.price,
-    compareAtPrice: product.compare_at_price,
-    showFromLabel: variantPrices.length > 1,
+    price,
+    compareAtPrice,
+    showFromLabel: hasMultipleVariantPrices || hasMultipleTierPrices,
   }
 }
 
