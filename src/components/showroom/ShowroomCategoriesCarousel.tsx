@@ -11,10 +11,13 @@ const WHEEL_MULTIPLIER = 2.2;
 
 interface ShowroomCategoriesCarouselProps {
   categories: CategoryWithCount[];
+  /** How many cards fit in the viewport row (3 on /comunidad desktop, 2 on home mobile). */
+  visibleCount?: number;
 }
 
 export function ShowroomCategoriesCarousel({
   categories,
+  visibleCount = 3,
 }: ShowroomCategoriesCarouselProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -22,7 +25,7 @@ export function ShowroomCategoriesCarousel({
   const offsetRef = useRef(0);
   const [cardWidth, setCardWidth] = useState(0);
 
-  const shouldAutoScroll = categories.length > 3;
+  const shouldAutoScroll = categories.length > visibleCount;
   const loopCategories = shouldAutoScroll
     ? [...categories, ...categories]
     : categories;
@@ -32,9 +35,10 @@ export function ShowroomCategoriesCarousel({
   const updateCardWidth = useCallback(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    const next = Math.floor((viewport.clientWidth - GAP_PX * 2) / 3);
+    const gaps = GAP_PX * Math.max(visibleCount - 1, 0);
+    const next = Math.floor((viewport.clientWidth - gaps) / visibleCount);
     setCardWidth(next > 0 ? next : 0);
-  }, []);
+  }, [visibleCount]);
 
   const wrapOffset = useCallback(
     (offset: number) => {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { FeaturedCategoryCard } from "@/components/store/FeaturedCategoryCard";
+import { FeaturedCategoriesMobileCarousel } from "@/components/store/FeaturedCategoriesMobileCarousel";
 import { Button } from "@/components/ui/button";
 import { getFeaturedCategories } from "@/lib/api";
 
@@ -42,7 +43,11 @@ export async function FeaturedCategoriesSection() {
           </Button>
         </div>
 
-        <ul className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="lg:hidden">
+          <FeaturedCategoriesMobileCarousel categories={categories} />
+        </div>
+
+        <ul className="hidden grid-cols-2 gap-4 sm:gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-6">
           {categories.map((category) => (
             <li key={category.id}>
               <FeaturedCategoryCard category={category} />
