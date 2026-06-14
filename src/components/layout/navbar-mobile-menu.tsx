@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Heart, LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/layout/UserAvatar";
@@ -32,15 +33,19 @@ export function NavbarMobileMenu({
 }: NavbarMobileMenuProps) {
   const router = useRouter();
   const { signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+
+  const closeMenu = () => setOpen(false);
 
   const handleSignOut = () => {
+    closeMenu();
     signOut();
     toast.success("Sesión cerrada");
     router.push("/");
   };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -53,38 +58,39 @@ export function NavbarMobileMenu({
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full border-border bg-neon-surface sm:max-w-sm"
+        className="flex h-full w-full flex-col gap-0 overflow-hidden border-border bg-neon-surface p-0 sm:max-w-sm"
       >
-        <SheetHeader>
+        <SheetHeader className="shrink-0 border-b border-border/50 px-4 py-4">
           <SheetTitle className="font-heading text-neon-pink dark:text-cyber-yellow">
             Menú
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="flex flex-col gap-6 px-4">
-          <MobileStoreSection />
+        <nav
+          className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-4 py-4"
+          aria-label="Navegación móvil"
+        >
+          <MobileStoreSection onNavigate={closeMenu} />
           <MobileSection
             title="Carteles Personalizados"
             items={CUSTOM_NAV_ITEMS}
+            onNavigate={closeMenu}
           />
 
           <div className="flex flex-col gap-1">
-            <Link href="/quienes-somos" className="nav-link">
+            <MobileNavLink href="/quienes-somos" onNavigate={closeMenu}>
               Quiénes somos
-            </Link>
-            <Link href={COMMUNITY_PATH} className="nav-link">
+            </MobileNavLink>
+            <MobileNavLink href={COMMUNITY_PATH} onNavigate={closeMenu}>
               Comunidad
-            </Link>
+            </MobileNavLink>
           </div>
 
-          <div className="border-t border-border/50 pt-4">
+          <div className="mt-auto border-t border-border/50 pt-4">
             {isAuthenticated && user ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <UserAvatar
-                    user={user}
-                    useNextImageForUpload={false}
-                  />
+              <div className="flex flex-col gap-2">
+                <div className="mb-2 flex items-center gap-3">
+                  <UserAvatar user={user} useNextImageForUpload={false} />
                   <div className="min-w-0">
                     <p className="truncate font-heading text-sm font-semibold text-foreground">
                       {getUserFullName(user)}
@@ -94,6 +100,23 @@ export function NavbarMobileMenu({
                     </p>
                   </div>
                 </div>
+
+                <MobileMenuButtonLink href="/perfil" onNavigate={closeMenu}>
+                  <User className="size-4" />
+                  Mi perfil
+                </MobileMenuButtonLink>
+
+                <MobileMenuButtonLink href="/favoritos" onNavigate={closeMenu}>
+                  <Heart className="size-4" />
+                  Favoritos
+                </MobileMenuButtonLink>
+
+                {user.role === "admin" ? (
+                  <MobileMenuButtonLink href="/admin" onNavigate={closeMenu}>
+                    <LayoutDashboard className="size-4" />
+                    Panel admin
+                  </MobileMenuButtonLink>
+                ) : null}
 
                 <Button
                   variant="ghost"
@@ -106,57 +129,20 @@ export function NavbarMobileMenu({
                   <LogOut className="size-4" />
                   Cerrar sesión
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  className={cn(NAV_ACTION_BTN, "justify-start")}
-                  asChild
-                >
-                  <Link href="/perfil">
-                    <User className="size-4" />
-                    Mi perfil
-                  </Link>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className={cn(NAV_ACTION_BTN, "justify-start")}
-                  asChild
-                >
-                  <Link href="/favoritos">
-                    <Heart className="size-4" />
-                    Favoritos
-                  </Link>
-                </Button>
-
-                {user.role === "admin" ? (
-                  <Button
-                    variant="ghost"
-                    className={cn(NAV_ACTION_BTN, "justify-start")}
-                    asChild
-                  >
-                    <Link href="/admin">
-                      <LayoutDashboard className="size-4" />
-                      Panel admin
-                    </Link>
-                  </Button>
-                ) : null}
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <Button
-                  variant="ghost"
-                  className={cn(NAV_ACTION_BTN, "justify-start")}
-                  asChild
-                >
-                  <Link href="/auth/login">Iniciar sesión</Link>
-                </Button>
+                <MobileMenuButtonLink href="/auth/login" onNavigate={closeMenu}>
+                  Iniciar sesión
+                </MobileMenuButtonLink>
                 <Button
                   variant="outline"
                   className="justify-start rounded-full border-neon-pink/30 hover:border-neon-pink hover:text-neon-pink dark:hover:border-cyber-yellow dark:hover:text-cyber-yellow"
                   asChild
                 >
-                  <Link href="/auth/registro">Registrarse</Link>
+                  <Link href="/auth/registro" onClick={closeMenu}>
+                    Registrarse
+                  </Link>
                 </Button>
               </div>
             )}
@@ -167,7 +153,47 @@ export function NavbarMobileMenu({
   );
 }
 
-function MobileStoreSection() {
+interface NavigateProps {
+  onNavigate: () => void;
+}
+
+function MobileNavLink({
+  href,
+  children,
+  onNavigate,
+}: NavigateProps & {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="nav-link" onClick={onNavigate}>
+      {children}
+    </Link>
+  );
+}
+
+function MobileMenuButtonLink({
+  href,
+  children,
+  onNavigate,
+}: NavigateProps & {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      className={cn(NAV_ACTION_BTN, "justify-start")}
+      asChild
+    >
+      <Link href={href} onClick={onNavigate}>
+        {children}
+      </Link>
+    </Button>
+  );
+}
+
+function MobileStoreSection({ onNavigate }: NavigateProps) {
   const { categories, isLoading, error } = useCategories();
 
   return (
@@ -177,7 +203,11 @@ function MobileStoreSection() {
       </p>
       <ul className="flex flex-col gap-0.5">
         <li>
-          <Link href="/productos" className="nav-dropdown-item text-xs">
+          <Link
+            href="/productos"
+            className="nav-dropdown-item text-xs"
+            onClick={onNavigate}
+          >
             Ver todos
           </Link>
         </li>
@@ -196,6 +226,7 @@ function MobileStoreSection() {
               <Link
                 href={`/productos?category=${encodeURIComponent(category.slug)}`}
                 className="nav-dropdown-item text-xs"
+                onClick={onNavigate}
               >
                 {category.name}
               </Link>
@@ -206,12 +237,12 @@ function MobileStoreSection() {
   );
 }
 
-interface MobileSectionProps {
+interface MobileSectionProps extends NavigateProps {
   title: string;
   items: { label: string; href: string }[];
 }
 
-function MobileSection({ title, items }: MobileSectionProps) {
+function MobileSection({ title, items, onNavigate }: MobileSectionProps) {
   return (
     <div>
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -220,7 +251,11 @@ function MobileSection({ title, items }: MobileSectionProps) {
       <ul className="flex flex-col gap-0.5">
         {items.map((item) => (
           <li key={item.href}>
-            <Link href={item.href} className="nav-dropdown-item text-xs">
+            <Link
+              href={item.href}
+              className="nav-dropdown-item text-xs"
+              onClick={onNavigate}
+            >
               {item.label}
             </Link>
           </li>
