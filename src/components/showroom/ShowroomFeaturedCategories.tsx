@@ -89,7 +89,7 @@ export function ShowroomFeaturedCategories() {
         {isLoading ? (
           <CategoriesSkeleton />
         ) : (
-          <ShowroomCategoriesCarousel categories={categories} />
+          <ShowroomCategoriesCarousel categories={categories} visibleCount={3} />
         )}
       </div>
     </div>
