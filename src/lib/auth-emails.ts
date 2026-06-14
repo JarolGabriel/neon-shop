@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 const ACCENT = "#fcee0a";
 const SURFACE = "#1f1f24";
 const DEV_FROM_ADDRESS = "onboarding@resend.dev";
+/** Dominio verificado en Resend (neonshop.shop). */
+const PRODUCTION_FROM_ADDRESS = "no-reply@neonshop.shop";
 const DEFAULT_FROM = `Neon Shop <${DEV_FROM_ADDRESS}>`;
 
 /** Dominios gratuitos no pueden usarse como remitente en Resend. */
@@ -41,17 +43,19 @@ export async function getSupportEmailFromSettings(): Promise<string> {
   return data?.value?.trim() || DEV_FROM_ADDRESS;
 }
 
-export function formatResendFromAddress(supportEmail: string): string {
-  const address = supportEmail.includes("@")
-    ? supportEmail
-    : DEV_FROM_ADDRESS;
+export function formatResendFromAddress(email: string): string {
+  const trimmed = email.trim();
+  if (trimmed.includes("<") && trimmed.includes(">")) {
+    return trimmed;
+  }
+  const address = trimmed.includes("@") ? trimmed : DEV_FROM_ADDRESS;
   return `Neon Shop <${address}>`;
 }
 
 /**
  * Remitente para Resend. El "from" debe ser un dominio verificado en Resend
- * (o onboarding@resend.dev en desarrollo). support_email en site_settings
- * se usa como replyTo, no como remitente si es Gmail u otro proveedor gratuito.
+ * (neonshop.shop en producción, o onboarding@resend.dev en dev sin env).
+ * support_email en site_settings se usa como replyTo, no como remitente.
  */
 export async function getResendFromAddress(): Promise<string> {
   const envFrom = process.env.RESEND_FROM_EMAIL?.trim();
@@ -63,12 +67,7 @@ export async function getResendFromAddress(): Promise<string> {
     return DEFAULT_FROM;
   }
 
-  const supportEmail = await getSupportEmailFromSettings();
-  if (isResendCompatibleFromAddress(supportEmail)) {
-    return formatResendFromAddress(supportEmail);
-  }
-
-  return DEFAULT_FROM;
+  return formatResendFromAddress(PRODUCTION_FROM_ADDRESS);
 }
 
 export function extractRecoveryTokenHash(
