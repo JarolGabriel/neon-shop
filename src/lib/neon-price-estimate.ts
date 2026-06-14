@@ -1,6 +1,11 @@
+import {
+  getMinTierPriceUsd,
+  getPriceForSize,
+  normalizeSizeKey,
+} from "@/lib/product-size-pricing";
 import type { SpecialEffectId } from "@/lib/neon-customizer-config";
 
-export const NEON_PRICE_MIN_USD = 40;
+export const NEON_PRICE_MIN_USD = getMinTierPriceUsd();
 export const NEON_PRICE_MAX_USD = 180;
 
 export interface NeonPriceEstimateInput {
@@ -14,14 +19,6 @@ export interface NeonPriceEstimate {
   amountUsd: number;
   characterCount: number;
 }
-
-const SIZE_BASE_USD: Record<string, number> = {
-  pequeno: 40,
-  mediano: 58,
-  grande: 78,
-  xl: 115,
-  xxl: 155,
-};
 
 const EFFECT_PREMIUM_USD: Record<SpecialEffectId, number> = {
   single: 0,
@@ -45,7 +42,8 @@ export function estimateNeonPrice(
   if (!size || !usageType) return null;
 
   const characterCount = countNeonCharacters(textContent);
-  const sizeBase = SIZE_BASE_USD[size] ?? NEON_PRICE_MIN_USD;
+  const tierPrice = getPriceForSize(size);
+  const sizeBase = tierPrice ?? NEON_PRICE_MIN_USD;
 
   const extraCharacters = Math.max(0, characterCount - 8);
   const characterPremium = Math.min(extraCharacters * 2.5, 28);

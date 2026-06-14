@@ -1,4 +1,11 @@
 import type { CartItem } from "@/types/cart";
+import {
+  parseProductSelectionNotes,
+} from "@/lib/product-catalog-options";
+import {
+  getPriceForSize,
+  resolveSizeKeyFromLabel,
+} from "@/lib/product-size-pricing";
 
 /** Descuento por volumen alineado con BulkDiscountNotice (2+) + incentivo 3+. */
 const BULK_DISCOUNT_RATES: ReadonlyArray<{ minItems: number; rate: number }> = [
@@ -7,7 +14,20 @@ const BULK_DISCOUNT_RATES: ReadonlyArray<{ minItems: number; rate: number }> = [
 ];
 
 export function getCartItemUnitPrice(item: CartItem): number {
-  return item.product_variants?.price ?? item.products?.price ?? 0;
+  if (item.product_variants?.price != null) {
+    return item.product_variants.price;
+  }
+
+  if (item.notes) {
+    const { sizeLabel } = parseProductSelectionNotes(item.notes);
+    if (sizeLabel) {
+      const sizeKey = resolveSizeKeyFromLabel(sizeLabel);
+      const tierPrice = sizeKey ? getPriceForSize(sizeKey) : getPriceForSize(sizeLabel);
+      if (tierPrice != null) return tierPrice;
+    }
+  }
+
+  return item.products?.price ?? 0;
 }
 
 export function getCartSubtotal(items: CartItem[]): number {

@@ -85,13 +85,9 @@ export const BACKGROUNDS = [
   { id: "dark", src: "", label: "Negro", width: 0, height: 0 },
 ] as const;
 
-export const SIZE_OPTIONS = [
-  { value: "pequeno", label: "Pequeño · hasta 40 cm" },
-  { value: "mediano", label: "Mediano · 40–80 cm" },
-  { value: "grande", label: "Grande · 80–120 cm" },
-  { value: "xl", label: "XL · 120–180 cm" },
-  { value: "xxl", label: "XXL · +180 cm" },
-] as const;
+import { PRODUCT_SIZE_PRESETS } from "@/lib/product-size-pricing";
+
+export const SIZE_OPTIONS = PRODUCT_SIZE_PRESETS;
 
 export const SPECIAL_EFFECTS = [
   {
@@ -153,20 +149,23 @@ export const RGB_CYCLE = [
 
 export type NeonColor = (typeof NEON_COLORS)[number];
 
+import { getMaxDimensionCm, getProductSizeLabel } from "@/lib/product-size-pricing";
+
 export function getFontSize(size: string): string {
-  return (
-    {
-      pequeno: "1.8rem",
-      mediano: "2.5rem",
-      grande: "3.2rem",
-      xl: "4rem",
-      xxl: "5rem",
-    }[size] ?? "2.5rem"
-  );
+  const maxCm = getMaxDimensionCm(size);
+  if (maxCm == null) return "2.5rem";
+  if (maxCm <= 30) return "1.8rem";
+  if (maxCm <= 40) return "2.2rem";
+  if (maxCm <= 50) return "2.5rem";
+  if (maxCm <= 60) return "2.8rem";
+  if (maxCm <= 70) return "3.2rem";
+  if (maxCm <= 80) return "3.6rem";
+  if (maxCm <= 90) return "4rem";
+  return "4.5rem";
 }
 
 export function getSizeLabel(size: string): string {
-  return SIZE_OPTIONS.find((opt) => opt.value === size)?.label ?? size;
+  return getProductSizeLabel(size);
 }
 
 export function getNeonStyle(

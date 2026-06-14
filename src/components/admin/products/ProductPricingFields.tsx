@@ -69,6 +69,11 @@ export function ProductPricingFields({
                   }}
                 />
               </FormControl>
+              <FormDescription className="text-slate-500">
+                Precio “antes del descuento” tachado en la tienda. Si lo dejas
+                vacío, se calcula automáticamente (+52% sobre el precio de
+                venta).
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

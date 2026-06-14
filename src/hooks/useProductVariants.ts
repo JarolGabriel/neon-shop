@@ -7,6 +7,7 @@ import {
   parseStoredProductColor,
   productHasConfiguredOptions,
 } from "@/lib/product-catalog-options";
+import { getPriceForSize, resolveCompareAtPrice } from "@/lib/product-size-pricing";
 import type { ProductDetail, ProductDetailVariant } from "@/types/product";
 
 export interface VariantColorOption {
@@ -24,6 +25,7 @@ export interface UseProductVariantsResult {
   selectedColorIndex: number;
   selectedVariant: ProductDetailVariant | null;
   currentPrice: number;
+  currentCompareAtPrice: number | null;
   hasConfiguredOptions: boolean;
   usesAdvancedVariants: boolean;
   selectSize: (size: string) => void;
@@ -229,6 +231,31 @@ export function useProductVariants(
     (c) => c.key === selectedColorKey,
   );
 
+  const currentPrice = useMemo(() => {
+    if (selectedVariant?.price != null) return selectedVariant.price;
+
+    if (configuredOptions && selectedSize) {
+      return getPriceForSize(selectedSize) ?? product.price;
+    }
+
+    if (simpleProduct && selectedSize) {
+      return getPriceForSize(selectedSize) ?? product.price;
+    }
+
+    return product.price;
+  }, [
+    selectedVariant,
+    configuredOptions,
+    simpleProduct,
+    selectedSize,
+    product.price,
+  ]);
+
+  const currentCompareAtPrice = useMemo(
+    () => resolveCompareAtPrice(currentPrice, product.compare_at_price),
+    [currentPrice, product.compare_at_price],
+  );
+
   return {
     variants,
     sizes,
@@ -237,7 +264,8 @@ export function useProductVariants(
     selectedColorKey,
     selectedColorIndex: selectedColorIndex < 0 ? 0 : selectedColorIndex,
     selectedVariant,
-    currentPrice: selectedVariant?.price ?? product.price,
+    currentPrice,
+    currentCompareAtPrice,
     hasConfiguredOptions: configuredOptions !== null,
     usesAdvancedVariants,
     selectSize,

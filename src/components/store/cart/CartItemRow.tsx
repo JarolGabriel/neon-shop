@@ -12,6 +12,7 @@ import {
   getCartItemImage,
   getCartItemUnitPrice,
 } from "@/lib/cart-pricing";
+import { parseProductSelectionNotes } from "@/lib/product-catalog-options";
 import {
   getCartItemStock,
   LOW_STOCK_THRESHOLD,
@@ -30,11 +31,12 @@ export function CartItemRow({ item }: CartItemRowProps) {
   const lineTotal = unitPrice * item.quantity;
   const image = getCartItemImage(item);
   const productSlug = item.products?.slug;
+  const parsedNotes = parseProductSelectionNotes(item.notes ?? "");
   const variantParts = [
     item.product_variants?.size
       ? formatSizeLabel(item.product_variants.size)
-      : null,
-    item.product_variants?.color,
+      : parsedNotes.sizeLabel,
+    item.product_variants?.color ?? parsedNotes.colorName,
   ].filter(Boolean);
   const stock = getCartItemStock(item);
   const isOutOfStock = stock !== null && stock <= 0;

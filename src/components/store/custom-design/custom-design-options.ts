@@ -1,15 +1,11 @@
+import { PRODUCT_SIZE_PRESETS } from "@/lib/product-size-pricing";
+
 export interface SelectOption {
   value: string;
   label: string;
 }
 
-export const SIZE_OPTIONS: SelectOption[] = [
-  { value: "pequeno", label: "Pequeño (hasta 40 cm)" },
-  { value: "mediano", label: "Mediano (40 – 80 cm)" },
-  { value: "grande", label: "Grande (80 – 120 cm)" },
-  { value: "xl", label: "XL (120 – 180 cm)" },
-  { value: "xxl", label: "XXL (más de 180 cm)" },
-];
+export const SIZE_OPTIONS: SelectOption[] = PRODUCT_SIZE_PRESETS;
 
 export const BUDGET_OPTIONS: SelectOption[] = [
   { value: "40-100", label: "$40 – $100 USD" },

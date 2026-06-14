@@ -1,13 +1,17 @@
 import { z } from "zod";
+import { ALL_PRODUCT_SIZE_VALUES } from "@/lib/product-size-pricing";
+
+const preferredSizeEnum = z.enum(
+  ALL_PRODUCT_SIZE_VALUES as [string, ...string[]],
+  { message: "Elige un tamaño" },
+);
 
 export const neonTextFormSchema = z.object({
   text_content: z
     .string()
     .min(1, "Escribe el texto de tu letrero")
     .max(80, "Máximo 80 caracteres"),
-  preferred_size: z.enum(["pequeno", "mediano", "grande", "xl", "xxl"], {
-    message: "Elige un tamaño",
-  }),
+  preferred_size: preferredSizeEnum,
   usage_type: z.enum(["interior", "exterior_ip67"], {
     message: "Elige el uso",
   }),
