@@ -6,6 +6,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { SiteBrandingProvider } from "@/context/SiteBrandingContext";
+import { fetchSiteSettings } from "@/lib/site-settings-server";
+import {
+  getFounderProfile,
+  getSiteMetadata,
+  getStoreName,
+} from "@/lib/site-settings-utils";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -19,34 +26,58 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: "The Art Neon | Letreros Personalizados",
-  description: "Creamos tu letrero de neón personalizado en Venezuela.",
-  icons: {
-    icon: "/icon.svg",
-  },
-};
-export default function RootLayout({
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchSiteSettings();
+  const meta = getSiteMetadata(settings);
+
+  return {
+    title: {
+      default: meta.fullTitle,
+      template: `%s | ${meta.siteName}`,
+    },
+    description: meta.siteDescription,
+    icons: {
+      icon: "/icon.svg",
+    },
+    openGraph: {
+      title: meta.fullTitle,
+      description: meta.siteDescription,
+      type: "website",
+      ...(meta.ogImageUrl ? { images: [{ url: meta.ogImageUrl }] } : {}),
+    },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await fetchSiteSettings();
+  const storeName = getStoreName(settings);
+  const founderProfile = getFounderProfile(settings, storeName);
+
   return (
     <html lang="es" className="h-full antialiased" suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} min-h-full flex flex-col`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <AuthProvider>
-            <FavoritesProvider>
-              <CartProvider>
-                <PublicStoreChrome footer={<Footer />}>
-                  {children}
-                </PublicStoreChrome>
-                <Toaster position="top-center" richColors closeButton offset={80} />
-              </CartProvider>
-            </FavoritesProvider>
-          </AuthProvider>
+          <SiteBrandingProvider
+            storeName={storeName}
+            founderProfile={founderProfile}
+          >
+            <AuthProvider>
+              <FavoritesProvider>
+                <CartProvider>
+                  <PublicStoreChrome footer={<Footer />}>
+                    {children}
+                  </PublicStoreChrome>
+                  <Toaster position="top-center" richColors closeButton offset={80} />
+                </CartProvider>
+              </FavoritesProvider>
+            </AuthProvider>
+          </SiteBrandingProvider>
         </ThemeProvider>
       </body>
     </html>

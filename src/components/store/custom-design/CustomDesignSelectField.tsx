@@ -18,6 +18,7 @@ interface CustomDesignSelectFieldProps<T extends FieldValues> {
   label: string;
   options: SelectOption[];
   placeholder?: string;
+  optional?: boolean;
 }
 
 export function CustomDesignSelectField<T extends FieldValues>({
@@ -26,6 +27,7 @@ export function CustomDesignSelectField<T extends FieldValues>({
   label,
   options,
   placeholder = "Selecciona una opción",
+  optional = false,
 }: CustomDesignSelectFieldProps<T>) {
   return (
     <FormField
@@ -33,7 +35,14 @@ export function CustomDesignSelectField<T extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel>
+            {label}
+            {optional ? (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                (opcional)
+              </span>
+            ) : null}
+          </FormLabel>
           <div className="relative">
             <FormControl>
               <NativeSelect

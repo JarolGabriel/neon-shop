@@ -12,56 +12,70 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const preferredSizeEnum = z.enum(
   ALL_PRODUCT_SIZE_VALUES as [string, ...string[]],
-  { message: "Elige un tamaño aproximado" },
+  { message: "Elige un tamaño válido" },
 );
 
-export const customDesignFormSchema = z.object({
-  preferred_size: z
-    .string()
-    .min(1, "Elige un tamaño aproximado")
-    .pipe(preferredSizeEnum),
-  budget_range: z
-    .string()
-    .min(1, "Elige un presupuesto estimado")
-    .pipe(
-      z.enum(
-        ["40-100", "150-400", "400-600", "600-800", "800-1000", "1000+"],
-        { message: "Elige un presupuesto estimado" },
+const optionalPreferredSize = z
+  .string()
+  .refine(
+    (value) => value === "" || preferredSizeEnum.safeParse(value).success,
+    { message: "Elige un tamaño válido" },
+  );
+
+const optionalBudgetRange = z
+  .string()
+  .refine(
+    (value) =>
+      value === "" ||
+      ["40-100", "150-400", "400-600", "600-800", "800-1000", "1000+"].includes(
+        value,
       ),
-    ),
-  purpose: z
-    .string()
-    .min(1, "Indica para qué usarás el letrero")
-    .pipe(
-      z.enum(["negocio", "evento", "uso_personal"], {
-        message: "Indica para qué usarás el letrero",
-      }),
-    ),
+    { message: "Elige un presupuesto válido" },
+  );
+
+const optionalPurpose = z
+  .string()
+  .refine(
+    (value) =>
+      value === "" || ["negocio", "evento", "uso_personal"].includes(value),
+    { message: "Indica un uso válido" },
+  );
+
+const optionalMaterial = z
+  .string()
+  .refine(
+    (value) =>
+      value === "" ||
+      ["acrilico_transparente", "acrilico_negro", "acrilico_blanco", "otro"].includes(
+        value,
+      ),
+    { message: "Elige un material válido" },
+  );
+
+const optionalUsageType = z
+  .string()
+  .refine(
+    (value) => value === "" || ["interior", "exterior_ip67"].includes(value),
+    { message: "Indica un tipo de uso válido" },
+  );
+
+const optionalDeliveryTime = z
+  .string()
+  .refine(
+    (value) => value === "" || ["standard", "express"].includes(value),
+    { message: "Elige un tiempo de entrega válido" },
+  );
+
+export const customDesignFormSchema = z.object({
+  preferred_size: optionalPreferredSize,
+  budget_range: optionalBudgetRange,
+  purpose: optionalPurpose,
   delivery_address: z
     .string()
-    .min(1, "Indica la dirección o ciudad de entrega")
     .max(200, "La dirección no puede superar los 200 caracteres"),
-  material: z
-    .string()
-    .min(1, "Elige un material")
-    .pipe(
-      z.enum(
-        ["acrilico_transparente", "acrilico_negro", "acrilico_blanco", "otro"],
-        { message: "Elige un material" },
-      ),
-    ),
-  usage_type: z
-    .string()
-    .min(1, "Indica si es para interior o exterior")
-    .pipe(
-      z.enum(["interior", "exterior_ip67"], {
-        message: "Indica si es para interior o exterior",
-      }),
-    ),
-  delivery_time: z
-    .string()
-    .min(1, "Elige un tiempo de entrega")
-    .pipe(z.enum(["standard", "express"], { message: "Elige un tiempo de entrega" })),
+  material: optionalMaterial,
+  usage_type: optionalUsageType,
+  delivery_time: optionalDeliveryTime,
   customer_notes: z
     .string()
     .min(

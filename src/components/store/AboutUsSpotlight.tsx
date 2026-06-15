@@ -1,9 +1,15 @@
+"use client";
+
 import {
   ABOUT_US_SPOTLIGHT_HEADING,
   ABOUT_US_SPOTLIGHT_PARAGRAPHS,
 } from "@/components/store/about-us-story-data";
+import { useStoreName } from "@/context/SiteBrandingContext";
+import { interpolateStoreName } from "@/lib/store-branding";
 
 export function AboutUsSpotlight() {
+  const storeName = useStoreName();
+
   return (
     <section
       className="border-t border-border bg-background px-4 py-16 sm:px-6 lg:py-24"
@@ -22,7 +28,7 @@ export function AboutUsSpotlight() {
             key={paragraph.slice(0, 40)}
             className="text-base leading-relaxed text-muted-foreground"
           >
-            {paragraph}
+            {interpolateStoreName(paragraph, storeName)}
           </p>
         ))}
       </div>

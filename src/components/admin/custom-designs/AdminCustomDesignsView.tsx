@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AdminErrorBanner } from "@/components/admin/AdminErrorBanner";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CustomDesignDetailSheet } from "@/components/admin/custom-designs/CustomDesignDetailSheet";
 import { CustomDesignsFilters } from "@/components/admin/custom-designs/CustomDesignsFilters";
@@ -116,17 +117,7 @@ export function AdminCustomDesignsView() {
       />
 
       {error ? (
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <p>{error}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refresh()}
-            className="border-red-200 bg-white"
-          >
-            Reintentar
-          </Button>
-        </div>
+        <AdminErrorBanner message={error} onRetry={() => void refresh()} />
       ) : null}
 
       <CustomDesignsFilters

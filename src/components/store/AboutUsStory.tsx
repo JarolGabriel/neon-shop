@@ -1,11 +1,17 @@
+"use client";
+
 import Image from "next/image";
 import {
-  ABOUT_US_FOUNDER_NAME,
   ABOUT_US_HEADING,
   ABOUT_US_PARAGRAPHS,
 } from "@/components/store/about-us-story-data";
+import { useFounderProfile, useStoreName } from "@/context/SiteBrandingContext";
+import { interpolateStoreName } from "@/lib/store-branding";
 
 export function AboutUsStory() {
+  const storeName = useStoreName();
+  const { name, imageUrl, imageAlt } = useFounderProfile();
+
   return (
     <section
       className="bg-background px-4 py-16 sm:px-6 lg:py-24"
@@ -15,33 +21,34 @@ export function AboutUsStory() {
         <figure className="lg:sticky lg:top-24">
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
             <Image
-              src="/images/frank-NSY.jpeg"
-              alt="Frank Siras sosteniendo un letrero de neón personalizado"
+              src={imageUrl}
+              alt={imageAlt}
               fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              sizes="(max-width: 1024px) 100vw, 42vw"
               className="object-cover object-center"
+              priority
+              unoptimized={imageUrl.startsWith("/storage/")}
             />
           </div>
-          <figcaption className="mt-4 text-base font-bold text-foreground sm:text-lg">
-            {ABOUT_US_FOUNDER_NAME}
+          <figcaption className="mt-4 text-center text-sm text-muted-foreground">
+            {name}
           </figcaption>
         </figure>
 
-        <div className="space-y-5">
+        <div>
           <h1
             id="about-us-heading"
-            className="font-heading text-3xl font-bold leading-tight text-foreground sm:text-4xl"
+            className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            {ABOUT_US_HEADING}
+            {interpolateStoreName(ABOUT_US_HEADING, storeName)}
           </h1>
 
           {ABOUT_US_PARAGRAPHS.map((paragraph) => (
             <p
               key={paragraph.slice(0, 40)}
-              className="text-base leading-relaxed text-muted-foreground"
+              className="mt-4 text-base leading-relaxed text-muted-foreground"
             >
-              {paragraph}
+              {interpolateStoreName(paragraph, storeName)}
             </p>
           ))}
         </div>

@@ -1,18 +1,23 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle, Phone } from "lucide-react";
+import { useStoreName } from "@/context/SiteBrandingContext";
 
 interface FAQHeroBannerProps {
   phone?: { display: string; href: string } | null;
 }
 
 export function FAQHeroBanner({ phone }: FAQHeroBannerProps) {
+  const storeName = useStoreName();
+
   return (
     <section className="relative w-full overflow-hidden">
       <div className="relative min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]">
         <Image
           src="/images/banner-footer-al-por-mayor.jpg"
-          alt="Letreros de neón LED en taller Neon Shop"
+          alt={`Letreros de neón LED en taller ${storeName}`}
           fill
           priority
           className="object-cover"

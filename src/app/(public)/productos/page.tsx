@@ -4,16 +4,19 @@ import { ProductCatalog } from "@/components/store/catalog/ProductCatalog";
 import { ProductCardSkeleton } from "@/components/store/ProductCardSkeleton";
 import { CATALOG_PAGE_SIZE } from "@/hooks/useCatalogProducts";
 
-export const metadata: Metadata = {
-  title: "Catálogo de letreros | Neon Shop",
-  description:
-    "Explora letreros de neón LED por categoría, color y tamaño. Filtra, compara y pide por WhatsApp.",
-  openGraph: {
-    title: "Catálogo de letreros | Neon Shop",
-    description: "Carteles de neón listos y personalizados para tu negocio o hogar.",
-    type: "website",
-  },
-};
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Catálogo de letreros", {
+    description:
+      "Explora letreros de neón LED por categoría, color y tamaño. Filtra, compara y pide por WhatsApp.",
+    openGraph: {
+      description:
+        "Carteles de neón listos y personalizados para tu negocio o hogar.",
+      type: "website",
+    },
+  });
+}
 
 function CatalogFallback() {
   return (

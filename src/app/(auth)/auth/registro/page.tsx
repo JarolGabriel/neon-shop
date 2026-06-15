@@ -20,12 +20,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { signUp } from "@/lib/api";
 import { signUpSchema, type SignUpInput } from "@/lib/schemas/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const storeName = useStoreName();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpInput>({
@@ -64,7 +66,7 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Crear cuenta"
-      subtitle="Únete a Neon Shop y empieza a diseñar tu letrero ideal."
+      subtitle={`Únete a ${storeName} y empieza a diseñar tu letrero ideal.`}
     >
       <Form {...form}>
         <div className="space-y-4">

@@ -4,6 +4,7 @@ import { FOOTER_LINK_CLASS } from "@/components/shared/footer-data";
 import { FooterSocialIcons } from "@/components/shared/FooterSocialIcons";
 
 interface FooterBrandColumnProps {
+  storeName: string;
   supportEmail: string;
   phone: { display: string; href: string } | null;
   address: string | null;
@@ -12,6 +13,7 @@ interface FooterBrandColumnProps {
 }
 
 export function FooterBrandColumn({
+  storeName,
   supportEmail,
   phone,
   address,
@@ -21,7 +23,7 @@ export function FooterBrandColumn({
   return (
     <div>
       <h2 className="font-heading text-sm font-bold text-neon-pink">
-        Neon Shop
+        {storeName}
       </h2>
       <p className="mt-4 text-sm leading-relaxed text-neutral-400">
         Iluminando tu mundo con carteles de neón personalizados y ya hechos,

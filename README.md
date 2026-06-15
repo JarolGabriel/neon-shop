@@ -22,16 +22,29 @@ Catálogo · Carrito · Checkout vía WhatsApp · Panel admin · Showroom comuni
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-Animations-0055FF?style=flat-square&logo=framer&logoColor=white)
 ![Resend](https://img.shields.io/badge/Resend-Email-000?style=flat-square)
 ![Vercel](https://img.shields.io/badge/Vercel-Deploy-000?style=flat-square&logo=vercel&logoColor=white)
+![Arquitectura](https://img.shields.io/badge/Arquitectura-Multi--instancia-6C63FF?style=flat-square)
 
 <br />
 
 [**Ver repositorio**](https://github.com/JarolGabriel/neon-shop) ·
+[**Tienda en vivo**](https://www.neonshop.shop/) ·
 [**Inicio rápido**](#inicio-rápido) ·
 [**Rutas**](#rutas-de-la-aplicación) ·
-[**Migraciones**](#base-de-datos-y-migraciones) ·
-[**Variables**](#variables-de-entorno)
+[**Despliegue**](#despliegue-vercel) ·
+[**Migraciones**](#base-de-datos-y-migraciones)
 
 </div>
+
+---
+
+## Sitios en vivo
+
+| Entorno | URL |
+|---------|-----|
+| **Producción (dominio propio)** | [https://www.neonshop.shop/](https://www.neonshop.shop/) |
+| **Vercel (preview `main`)** | [neon-shop-git-main-jarol-gabriels-projects.vercel.app](https://neon-shop-git-main-jarol-gabriels-projects.vercel.app) |
+
+Correos transaccionales vía **Resend** con dominio verificado `neonshop.shop` (`no-reply@neonshop.shop`).
 
 ---
 
@@ -48,6 +61,8 @@ Catálogo · Carrito · Checkout vía WhatsApp · Panel admin · Showroom comuni
 **Neon Shop** es una tienda en línea moderna para un taller de letreros de neón flex y LED. Combina un catálogo de productos listos para comprar, un flujo de **diseño personalizado**, un **showroom comunitario** (reseñas con fotos) y un **panel de administración** completo.
 
 El checkout **no usa pasarela de pago**: el pedido se confirma por formulario, se registra en la base de datos, se envían correos vía **Resend** y el cliente continúa la compra por **WhatsApp** con un mensaje prellenado.
+
+El proyecto está diseñado como plataforma **multi-instancia**: un único repositorio y deploy sirven a múltiples tiendas independientes. Cada instancia tiene su propio dominio y su propio proyecto Supabase. La personalización (nombre, WhatsApp, descripción SEO, redes sociales) se gestiona desde el panel admin sin tocar código.
 
 ---
 
@@ -211,12 +226,26 @@ Completa al menos:
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role (solo servidor) |
-| `RESEND_API_KEY` | API key de Resend |
-| `RESEND_FROM_EMAIL` | Remitente verificado |
-| `NEXT_PUBLIC_SITE_URL` | URL pública (`http://localhost:3000` en dev) |
+| `RESEND_API_KEY` | API key de Resend (Vercel / `.env`) |
+| `RESEND_FROM_EMAIL` | Remitente verificado, ej. `no-reply@neonshop.shop` |
+| `NEXT_PUBLIC_SITE_URL` | URL pública de producción: `https://www.neonshop.shop` (en dev: `http://localhost:3000`) |
 | `ADMIN_EMAILS` | Emails que reciben rol admin al registrarse |
 
 Opcional: `NEXT_PUBLIC_WHATSAPP_NUMBER` como fallback en desarrollo.
+
+#### Deploy multi-instancia en Vercel
+
+En un deploy con múltiples dominios (un cliente por dominio), estas variables se configuran con **scope por dominio** en Vercel → Settings → Environment Variables:
+
+| Variable | Cambia por dominio | Razón |
+|----------|:------------------:|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Sí | Cada cliente tiene su Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Sí | Cada cliente tiene su Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ Sí | Cada cliente tiene su Supabase |
+| `RESEND_FROM_EMAIL` | ✅ Sí | El remitente debe ser el dominio del cliente |
+| `NEXT_PUBLIC_SITE_URL` | ✅ Sí | Define la URL canónica de esa instancia |
+| `ADMIN_EMAILS` | ✅ Sí | El admin de cada tienda es distinto |
+| `RESEND_API_KEY` | ❌ No | Una sola cuenta Resend para todos |
 
 ### 3. Base de datos y migraciones
 
@@ -259,6 +288,11 @@ LIMIT 10;
 
 En **Admin → Configuración** o vía `site_settings`:
 
+- `store_name` — nombre visible en navbar, footer y emails. Fallback: `Neon Shop`
+- `site_name` — nombre comercial que aparece en el título del navegador y Google
+- `site_tagline` — slogan de la tienda
+- `site_description` — descripción para SEO y Open Graph
+- `og_image_url` — imagen que aparece al compartir el link en WhatsApp/redes
 - `whatsapp_number` — número con código de país (ej. `58412…` o `1214…`)
 - `support_email`, `address`, `business_hours`
 - Redes sociales (`instagram_url`, `tiktok_url`, etc.)
@@ -268,6 +302,8 @@ Seed opcional de redes:
 ```bash
 node scripts/seed-site-settings-social.mjs
 ```
+
+**White-label (mismo código, dos tiendas):** despliega el repo en dos proyectos Vercel + Supabase (o dos bases de datos). En cada admin, configura `store_name` (ej. `Neon Shop` vs `Liem Shop`), `whatsapp_number`, `support_email`, etc. La migración `20260616000000_add_store_name_setting.sql` inserta el valor por defecto `Neon Shop` si no existe.
 
 ### 5. Arrancar en desarrollo
 
@@ -337,10 +373,18 @@ Paleta cyberpunk documentada en `DESIGN_SYSTEM.md`:
 
 ## Despliegue (Vercel)
 
+| Recurso | Valor |
+|---------|-------|
+| Dominio producción | [neonshop.shop](https://www.neonshop.shop/) |
+| Deploy Vercel (`main`) | `neon-shop-git-main-jarol-gabriels-projects.vercel.app` |
+| Email (Resend) | `no-reply@neonshop.shop` (dominio `neonshop.shop` verificado) |
+
 1. Importa el repo [JarolGabriel/neon-shop](https://github.com/JarolGabriel/neon-shop) en Vercel.
-2. Configura todas las variables de `.env.example`.
+2. Configura las variables de `.env.example` en Vercel, especialmente:
+   - `NEXT_PUBLIC_SITE_URL=https://www.neonshop.shop`
+   - `RESEND_API_KEY` y `RESEND_FROM_EMAIL=no-reply@neonshop.shop`
 3. Asegura que las migraciones ya están aplicadas en Supabase de producción.
-4. Verifica dominio en Resend para emails en producción.
+4. Conecta el dominio personalizado `neonshop.shop` en Vercel → **Settings → Domains**.
 5. Deploy.
 
 `next.config.ts` incluye rewrite de `/storage/*` hacia Supabase Storage e imágenes remotas permitidas.
@@ -378,6 +422,6 @@ Proyecto privado — todos los derechos reservados.
 
 Desarrollado con **Next.js** y **Supabase**
 
-[github.com/JarolGabriel/neon-shop](https://github.com/JarolGabriel/neon-shop)
+[neonshop.shop](https://www.neonshop.shop/) · [github.com/JarolGabriel/neon-shop](https://github.com/JarolGabriel/neon-shop)
 
 </div>

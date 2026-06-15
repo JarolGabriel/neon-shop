@@ -6,7 +6,10 @@ import { PolicyDocument } from "@/components/store/PolicyDocument";
 import { PolicyMarkdownContent } from "@/components/store/PolicyMarkdownContent";
 import { getSiteSettings } from "@/lib/api";
 import { getStaticPolicySections } from "@/lib/policy-content";
-import { getSupportEmail } from "@/lib/site-settings-utils";
+import { buildPageMetadata } from "@/lib/metadata-utils";
+import { getStoreNameFromDb } from "@/lib/site-settings-server";
+import { interpolateStoreName } from "@/lib/store-branding";
+import { getSupportEmail, getStoreName } from "@/lib/site-settings-utils";
 import { getPolicyBySlug } from "@/types/site-settings";
 
 interface PolicyPageProps {
@@ -20,18 +23,19 @@ export async function generateMetadata({
   const policy = getPolicyBySlug(slug);
 
   if (!policy) {
-    return { title: "Página no encontrada | Neon Shop" };
+    const storeName = await getStoreNameFromDb();
+    return buildPageMetadata("Página no encontrada", storeName);
   }
 
-  return {
-    title: `${policy.title} | Neon Shop`,
-    description: policy.description,
+  const storeName = await getStoreNameFromDb();
+
+  return buildPageMetadata(policy.title, storeName, {
+    description: interpolateStoreName(policy.description, storeName),
     openGraph: {
-      title: policy.title,
-      description: policy.description,
+      description: interpolateStoreName(policy.description, storeName),
       type: "website",
     },
-  };
+  });
 }
 
 export default async function PolicyPage({ params }: PolicyPageProps) {
@@ -43,9 +47,14 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
   }
 
   const settings = await getSiteSettings();
+  const storeName = getStoreName(settings);
   const supportEmail = getSupportEmail(settings) ?? "info@neonshop.com";
   const settingsContent = settings[policy.settingKey]?.trim();
-  const staticSections = getStaticPolicySections(slug, supportEmail);
+  const staticSections = getStaticPolicySections(
+    slug,
+    supportEmail,
+    storeName,
+  );
 
   if (!settingsContent && !staticSections) {
     notFound();

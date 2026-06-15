@@ -1,5 +1,6 @@
 import { getCartItemUnitPrice } from "@/lib/cart-pricing";
 import { parseProductSelectionNotes } from "@/lib/product-catalog-options";
+import { DEFAULT_STORE_NAME } from "@/lib/store-branding";
 import {
   buildWhatsAppUrl,
   truncateWhatsappMessage,
@@ -78,6 +79,7 @@ export function buildWhatsAppMessage(
   items: CartItem[],
   savingsAmount: number,
   total: number,
+  storeName: string = DEFAULT_STORE_NAME,
 ): string {
   const orderNum = orderId.slice(0, 8).toUpperCase();
   const lines = items.map((item, index) => formatCartItemLine(item, index));
@@ -87,7 +89,7 @@ export function buildWhatsAppMessage(
       ? `\nAhorro multi-letrero: -$${savingsAmount.toFixed(2)} USD`
       : "";
 
-  const message = `Nuevo pedido Neon Shop\nOrden: ${orderNum}\nCliente: ${values.customer_name}\nEmail: ${values.customer_email}\nTelefono: ${values.customer_phone}\nEntrega: ${values.delivery_city} — ${values.delivery_address}\n\n${lines.join("\n")}${savingsLine}\n\nTOTAL: $${total.toFixed(2)} USD`;
+  const message = `Nuevo pedido ${storeName}\nOrden: ${orderNum}\nCliente: ${values.customer_name}\nEmail: ${values.customer_email}\nTelefono: ${values.customer_phone}\nEntrega: ${values.delivery_city} — ${values.delivery_address}\n\n${lines.join("\n")}${savingsLine}\n\nTOTAL: $${total.toFixed(2)} USD`;
 
   return truncateWhatsappMessage(message);
 }

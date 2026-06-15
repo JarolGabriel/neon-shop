@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { RefreshCw } from "lucide-react";
 import { DashboardKpiGrid } from "@/components/admin/dashboard/DashboardKpiGrid";
 import { DashboardRecentOrders } from "@/components/admin/dashboard/DashboardRecentOrders";
+import { AdminErrorBanner } from "@/components/admin/AdminErrorBanner";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { useAdminDashboardStats } from "@/hooks/useAdminDashboardStats";
@@ -41,17 +42,7 @@ export function AdminDashboardView() {
       </div>
 
       {error ? (
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <p>{error}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refresh()}
-            className="border-red-200 bg-white"
-          >
-            Reintentar
-          </Button>
-        </div>
+        <AdminErrorBanner message={error} onRetry={() => void refresh()} />
       ) : null}
 
       <DashboardKpiGrid stats={stats} isLoading={isLoading} />

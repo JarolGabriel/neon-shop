@@ -6,6 +6,9 @@ import { ProductDetailView } from "@/components/store/ProductDetailView";
 import { ReviewsSection } from "@/components/store/reviews/ReviewsSection";
 import { MarqueeBanner } from "@/components/ui/marquee-banner";
 import { getProductBySlug, getSiteSettings } from "@/lib/api";
+import { buildPageMetadata } from "@/lib/metadata-utils";
+import { getStoreNameFromDb } from "@/lib/site-settings-server";
+import { interpolateStoreName } from "@/lib/store-branding";
 import {
   getWhatsappNumberFromSettings,
   isWhatsappConfigured,
@@ -21,28 +24,30 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
+  const storeName = await getStoreNameFromDb();
+
   if (!product) {
-    return { title: "Producto no encontrado | Neon Shop" };
+    return buildPageMetadata("Producto no encontrado", storeName);
   }
 
-  const description =
+  const description = interpolateStoreName(
     product.short_description ??
-    product.description ??
-    `Compra ${product.name} en Neon Shop.`;
+      product.description ??
+      `Compra ${product.name} en {{store_name}}.`,
+    storeName,
+  );
   const image =
     product.images?.find((img) => img.is_primary)?.image_url ??
     product.images?.[0]?.image_url;
 
-  return {
-    title: `${product.name} | Neon Shop`,
+  return buildPageMetadata(product.name, storeName, {
     description,
     openGraph: {
-      title: product.name,
       description,
       type: "website",
       images: image ? [{ url: image }] : [],
     },
-  };
+  });
 }
 
 export default async function ProductDetailPage({

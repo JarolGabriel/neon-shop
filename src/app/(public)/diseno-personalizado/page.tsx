@@ -8,17 +8,19 @@ import { CustomDesignSteps } from "@/components/store/custom-design/CustomDesign
 import { BackToTop } from "@/components/store/BackToTop";
 import { FAQSection } from "@/components/store/FAQSection";
 
-export const metadata: Metadata = {
-  title: "Diseño Personalizado | Neon Shop",
-  description:
-    "Transforma tu logo, texto o idea en un letrero de neón LED a medida. Servicio de diseño gratuito, asesoría experta y producción profesional en Neon Shop.",
-  openGraph: {
-    title: "Diseño Personalizado | Neon Shop",
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Diseño Personalizado", {
     description:
-      "Crea tu cartel de neón LED personalizado. Sube tu imagen o describe tu idea y nuestro equipo de diseño te ayudará a darle vida.",
-    type: "website",
-  },
-};
+      "Transforma tu logo, texto o idea en un letrero de neón LED a medida. Servicio de diseño gratuito, asesoría experta y producción profesional.",
+    openGraph: {
+      description:
+        "Crea tu cartel de neón LED personalizado. Sube tu imagen o describe tu idea y nuestro equipo de diseño te ayudará a darle vida.",
+      type: "website",
+    },
+  });
+}
 
 export default function CustomDesignPage() {
   return (

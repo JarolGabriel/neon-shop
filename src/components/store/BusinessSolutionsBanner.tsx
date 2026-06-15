@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useStickyStop } from "@/context/StickyStopContext";
+import { useStoreName } from "@/context/SiteBrandingContext";
 
 export function BusinessSolutionsBanner() {
+  const storeName = useStoreName();
   const stop = useStickyStop();
 
   return (
@@ -35,7 +37,7 @@ export function BusinessSolutionsBanner() {
 
           <p className="mt-5 text-sm leading-relaxed text-white/85 sm:text-base">
             Productos de señalización iluminada personalizada de alta calidad y
-            precios reales al por mayor. Neon-Shop. lleva más de Dos años
+            precios reales al por mayor. {storeName}. lleva más de Dos años
             gestionando pedidos de gran cantidad, incluyendo logística Nacional.
             Nuestros amables representantes mayoristas te ofrecerán asesoramiento
             y te ayudarán con tu pedido desde el concepto hasta la entrega.

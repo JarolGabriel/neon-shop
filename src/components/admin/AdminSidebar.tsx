@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { ADMIN_NAV_ITEMS } from "@/lib/admin-nav";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -15,11 +16,12 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ onNavigate, onSignOut }: AdminSidebarProps) {
   const pathname = usePathname();
+  const storeName = useStoreName();
 
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="border-b border-slate-200 px-5 py-5">
-        <p className="text-lg font-semibold text-slate-900">Neon Shop</p>
+        <p className="text-lg font-semibold text-slate-900">{storeName}</p>
         <p className="text-xs text-slate-500">Panel de administración</p>
       </div>
 

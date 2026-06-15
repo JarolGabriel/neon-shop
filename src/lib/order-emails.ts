@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 import { getResendFromAddress } from "@/lib/auth-emails";
+import { DEFAULT_STORE_NAME } from "@/lib/store-branding";
+import { getStoreNameFromDb } from "@/lib/site-settings-server";
 
 const ACCENT = "#fcee0a";
 const PINK = "#ff007a";
@@ -25,11 +27,12 @@ export interface OrderEmailPayload {
   items: OrderEmailLineItem[];
 }
 
-function emailShell(content: string): string {
+function emailShell(content: string, storeName: string): string {
+  const brand = storeName.trim() || DEFAULT_STORE_NAME;
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1f1f24; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #2e2e2e;">
       <div style="padding: 28px 24px 16px; text-align: center; border-bottom: 1px solid #2e2e2e;">
-        <p style="margin: 0; font-size: 22px; font-weight: 700; color: ${ACCENT};">⚡ Neon Shop</p>
+        <p style="margin: 0; font-size: 22px; font-weight: 700; color: ${ACCENT};">⚡ ${brand}</p>
       </div>
       <div style="padding: 24px;">
         ${content}
@@ -82,7 +85,10 @@ function buildTotalsHtml(payload: OrderEmailPayload): string {
     </p>`;
 }
 
-export function buildCustomerReceiptEmailHtml(payload: OrderEmailPayload): string {
+export function buildCustomerReceiptEmailHtml(
+  payload: OrderEmailPayload,
+  storeName: string = DEFAULT_STORE_NAME,
+): string {
   return emailShell(`
     <p style="margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #ffffff;">
       ¡Gracias por tu pedido, ${payload.customer_name}!
@@ -100,10 +106,13 @@ export function buildCustomerReceiptEmailHtml(payload: OrderEmailPayload): strin
     <p style="margin: 24px 0 0; line-height: 1.6; color: #6b7280; font-size: 13px;">
       Si tienes dudas, responde a este correo o escríbenos por WhatsApp.
     </p>
-  `);
+  `, storeName);
 }
 
-export function buildAdminOrderEmailHtml(payload: OrderEmailPayload): string {
+export function buildAdminOrderEmailHtml(
+  payload: OrderEmailPayload,
+  storeName: string = DEFAULT_STORE_NAME,
+): string {
   return emailShell(`
     <p style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: ${PINK};">
       🚨 Nueva orden #${payload.orderNum}
@@ -119,7 +128,7 @@ export function buildAdminOrderEmailHtml(payload: OrderEmailPayload): string {
     <p style="margin: 16px 0 0; color: #9ca3af; font-size: 13px;">
       Estado: pendiente de pago. Contacta al cliente por WhatsApp para confirmar.
     </p>
-  `);
+  `, storeName);
 }
 
 export async function sendOrderEmails(
@@ -129,14 +138,17 @@ export async function sendOrderEmails(
 ): Promise<{ customerOk: boolean; adminOk: boolean }> {
   let customerOk = false;
   let adminOk = false;
-  const fromAddress = await getResendFromAddress();
+  const [fromAddress, storeName] = await Promise.all([
+    getResendFromAddress(),
+    getStoreNameFromDb(),
+  ]);
 
   const { error: customerError } = await resend.emails.send({
     from: fromAddress,
     to: payload.customer_email,
     replyTo: supportEmail.includes("@") ? supportEmail : undefined,
-    subject: `✨ Recibo de pedido #${payload.orderNum} — Neon Shop`,
-    html: buildCustomerReceiptEmailHtml(payload),
+    subject: `✨ Recibo de pedido #${payload.orderNum} — ${storeName}`,
+    html: buildCustomerReceiptEmailHtml(payload, storeName),
   });
 
   if (customerError) {
@@ -151,7 +163,7 @@ export async function sendOrderEmails(
       to: supportEmail,
       replyTo: payload.customer_email,
       subject: `🚨 Nueva orden #${payload.orderNum} — ${payload.customer_name}`,
-      html: buildAdminOrderEmailHtml(payload),
+      html: buildAdminOrderEmailHtml(payload, storeName),
     });
 
     if (adminError) {

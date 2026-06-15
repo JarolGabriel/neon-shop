@@ -1,4 +1,7 @@
-import { PRODUCT_SIZE_PRESETS } from "@/lib/product-size-pricing";
+import {
+  PRODUCT_SIZE_PRESETS,
+  PRODUCT_SIZE_PRICE_TIERS,
+} from "@/lib/product-size-pricing";
 
 export interface SelectOption {
   value: string;
@@ -6,6 +9,13 @@ export interface SelectOption {
 }
 
 export const SIZE_OPTIONS: SelectOption[] = PRODUCT_SIZE_PRESETS;
+
+/** Solo etiqueta de tamaño (sin precio) — formulario /diseno-personalizado */
+export const SIZE_OPTIONS_LABEL_ONLY: SelectOption[] =
+  PRODUCT_SIZE_PRICE_TIERS.map((tier) => ({
+    value: tier.value,
+    label: tier.label,
+  }));
 
 export const BUDGET_OPTIONS: SelectOption[] = [
   { value: "40-100", label: "$40 – $100 USD" },
