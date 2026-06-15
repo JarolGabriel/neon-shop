@@ -11,20 +11,26 @@ import { BusinessSolutionsBanner } from "@/components/store/BusinessSolutionsBan
 import { FAQSection } from "@/components/store/FAQSection";
 import { BackToTop } from "@/components/store/BackToTop";
 import { StickyStopProvider } from "@/context/StickyStopContext";
+import { fetchSiteSettings } from "@/lib/site-settings-server";
+import { getSiteMetadata } from "@/lib/site-settings-utils";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Neon Shop | Letreros LED y Neón Personalizados",
-  description:
-    "Tienda de letreros LED y neón en Venezuela. Catálogo listo para enviar, diseño personalizado y envío a todo el país.",
-  openGraph: {
-    title: "Neon Shop | Letreros LED y Neón Personalizados",
-    description:
-      "Ilumina tu espacio con carteles de neón LED. Catálogo, diseño a medida y comunidad de clientes.",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchSiteSettings();
+  const { fullTitle, siteDescription, ogImageUrl } = getSiteMetadata(settings);
+
+  return {
+    title: fullTitle,
+    description: siteDescription,
+    openGraph: {
+      title: fullTitle,
+      description: siteDescription,
+      type: "website",
+      ...(ogImageUrl ? { images: [{ url: ogImageUrl }] } : {}),
+    },
+  };
+}
 
 export default function Home() {
   return (

@@ -1,4 +1,9 @@
 export const SITE_SETTING_KEYS = {
+  storeName: "store_name",
+  siteName: "site_name",
+  siteTagline: "site_tagline",
+  siteDescription: "site_description",
+  ogImageUrl: "og_image_url",
   whatsappNumber: "whatsapp_number",
   supportEmail: "support_email",
   address: "address",
@@ -9,6 +14,10 @@ export const SITE_SETTING_KEYS = {
   facebookUrl: "facebook_url",
   tiktokUrl: "tiktok_url",
   youtubeUrl: "youtube_url",
+  founderName: "founder_name",
+  founderImageUrl: "founder_image_url",
+  founderImageAlt: "founder_image_alt",
+  founderSectionHeading: "founder_section_heading",
 } as const;
 
 export type SiteSettingKey =
@@ -34,7 +43,7 @@ export const POLICY_PAGES: PolicyPageConfig[] = [
     settingKey: SITE_SETTING_KEYS.returnPolicy,
     title: "Política de reembolsos",
     description:
-      "Condiciones para devoluciones, cambios y reembolsos en Neon Shop.",
+      "Condiciones para devoluciones, cambios y reembolsos en {{store_name}}.",
   },
 ];
 

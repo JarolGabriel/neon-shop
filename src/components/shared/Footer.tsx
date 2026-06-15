@@ -10,6 +10,7 @@ import {
   buildSupportLinks,
   getBusinessAddress,
   getBusinessHours,
+  getStoreName,
   getSupportEmail,
   getWhatsappContact,
 } from "@/lib/site-settings-utils";
@@ -18,6 +19,7 @@ export async function Footer() {
   unstable_noStore();
 
   const settings = await getSiteSettings();
+  const storeName = getStoreName(settings);
   const supportEmail = getSupportEmail(settings) ?? "info@neonmfg.com";
   const phone = getWhatsappContact(settings);
   const address = getBusinessAddress(settings);
@@ -29,6 +31,7 @@ export async function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4 md:gap-8">
           <FooterBrandColumn
+            storeName={storeName}
             supportEmail={supportEmail}
             phone={phone}
             address={address}
@@ -45,7 +48,7 @@ export async function Footer() {
 
         <div className="mt-12 border-t border-neutral-800 pt-6">
           <p className="text-sm text-neutral-500">
-            © Fábrica Neón 2026... Impulsado por Neon Shop
+            © Fábrica Neón 2026... Impulsado por {storeName}
           </p>
         </div>
       </div>

@@ -6,6 +6,7 @@ import {
   getResendFromAddress,
   getSiteBaseUrl,
 } from "@/lib/auth-emails";
+import { getStoreNameFromDb } from "@/lib/site-settings-server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -90,13 +91,16 @@ export async function POST(request: NextRequest) {
 
     try {
       const catalogUrl = `${getSiteBaseUrl()}/productos`;
-      const fromAddress = await getResendFromAddress();
+      const [fromAddress, storeName] = await Promise.all([
+        getResendFromAddress(),
+        getStoreNameFromDb(),
+      ]);
 
       await resend.emails.send({
         from: fromAddress,
         to: email,
-        subject: `🎉 ¡Bienvenido a Neon Shop, ${first_name || "cliente"}!`,
-        html: buildWelcomeEmailHtml(first_name || "cliente", catalogUrl),
+        subject: `🎉 ¡Bienvenido a ${storeName}, ${first_name || "cliente"}!`,
+        html: buildWelcomeEmailHtml(first_name || "cliente", catalogUrl, storeName),
       });
     } catch (emailError) {
       console.error("Error enviando correo de bienvenida:", emailError);

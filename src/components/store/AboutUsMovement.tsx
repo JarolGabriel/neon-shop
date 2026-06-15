@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import {
   ABOUT_US_MOVEMENT_CTA,
@@ -7,8 +9,12 @@ import {
   ABOUT_US_MOVEMENT_SIGNATURE,
   ABOUT_US_MOVEMENT_SIGNOFF,
 } from "@/components/store/about-us-story-data";
+import { useStoreName } from "@/context/SiteBrandingContext";
+import { interpolateStoreName } from "@/lib/store-branding";
 
 export function AboutUsMovement() {
+  const storeName = useStoreName();
+
   return (
     <section
       className="border-t border-border bg-background px-4 py-16 sm:px-6 lg:py-24"
@@ -43,7 +49,7 @@ export function AboutUsMovement() {
               key={paragraph.slice(0, 40)}
               className="text-base leading-relaxed text-muted-foreground"
             >
-              {paragraph}
+              {interpolateStoreName(paragraph, storeName)}
             </p>
           ))}
 
@@ -54,7 +60,7 @@ export function AboutUsMovement() {
           <div className="space-y-1 pt-2 text-base text-muted-foreground">
             <p>{ABOUT_US_MOVEMENT_SIGNOFF}</p>
             <p className="font-medium text-foreground">
-              {ABOUT_US_MOVEMENT_SIGNATURE}
+              {interpolateStoreName(ABOUT_US_MOVEMENT_SIGNATURE, storeName)}
             </p>
           </div>
         </div>

@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import {
   createOrder,
   getCartSessionId,
@@ -51,6 +52,7 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { items, itemCount, savingsAmount, total, clearCart } = useCart();
+  const storeName = useStoreName();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
 
@@ -131,6 +133,7 @@ export function CheckoutModal({ open, onOpenChange }: CheckoutModalProps) {
         items,
         savingsAmount,
         total,
+        storeName,
       );
 
       saveLastOrder({

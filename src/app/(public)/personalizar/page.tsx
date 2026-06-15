@@ -10,11 +10,14 @@ import {
   isWhatsappConfigured,
 } from "@/lib/whatsapp-utils";
 
-export const metadata: Metadata = {
-  title: "Personaliza tu Letrero | Neon Shop",
-  description:
-    "Diseña tu letrero de neón LED personalizado. Escribe tu texto y recibe tu cotización por WhatsApp.",
-};
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Personaliza tu Letrero", {
+    description:
+      "Diseña tu letrero de neón LED personalizado. Escribe tu texto y recibe tu cotización por WhatsApp.",
+  });
+}
 
 export default async function PersonalizarPage() {
   const settings = await getSiteSettings();

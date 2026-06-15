@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getProducts } from "@/lib/api";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { formatUsd, getProductDisplayPrice } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
 
@@ -16,6 +17,7 @@ function getProductImage(product: CatalogProduct): string | null {
 }
 
 export function ShowroomFeaturedProduct() {
+  const storeName = useStoreName();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,7 +98,8 @@ export function ShowroomFeaturedProduct() {
             {activeProduct.name}
           </p>
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {activeProduct.short_description ?? "Letrero personalizado Neon Shop"}
+            {activeProduct.short_description ??
+              `Letrero personalizado ${storeName}`}
           </p>
           <p className="text-sm font-semibold text-neon-pink dark:text-cyber-yellow">
             {formatUsd(getProductDisplayPrice(activeProduct).price)}

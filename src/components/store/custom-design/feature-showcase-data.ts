@@ -12,9 +12,9 @@ export const FEATURE_SHOWCASE_BLOCKS: FeatureShowcaseBlock[] = [
     id: "creatividad",
     imageSrc: "/images/logo-diseno/logo-diseno1.webp",
     imageAlt: "Mujer frente a un letrero de neón con alas de ángel",
-    title: "Dé rienda suelta a su creatividad con Neon Shop",
+    title: "Dé rienda suelta a su creatividad con {{store_name}}",
     description:
-      "¡Da vida a tus ideas con Neon Shop! Nos especializamos en la elaboración de letreros de neón LED personalizados que convierten su visión en una obra maestra brillante. Desde diseños intrincados a declaraciones simples y elegantes, nuestro equipo colabora con usted para crear una pieza única que refleje a la perfección su estilo y necesidades.",
+      "¡Da vida a tus ideas con {{store_name}}! Nos especializamos en la elaboración de letreros de neón LED personalizados que convierten su visión en una obra maestra brillante. Desde diseños intrincados a declaraciones simples y elegantes, nuestro equipo colabora con usted para crear una pieza única que refleje a la perfección su estilo y necesidades.",
     imageOnLeft: true,
   },
   {

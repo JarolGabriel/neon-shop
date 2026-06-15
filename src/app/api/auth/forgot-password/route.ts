@@ -7,6 +7,7 @@ import {
   getSiteBaseUrl,
   getSupportEmailFromSettings,
 } from "@/lib/auth-emails";
+import { getStoreNameFromDb } from "@/lib/site-settings-server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -62,17 +63,18 @@ export async function POST(request: NextRequest) {
 
     const resetUrl = `${siteUrl}${resetPath}?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`;
 
-    const [fromAddress, supportEmail] = await Promise.all([
+    const [fromAddress, supportEmail, storeName] = await Promise.all([
       getResendFromAddress(),
       getSupportEmailFromSettings(),
+      getStoreNameFromDb(),
     ]);
 
     const { error: sendError } = await resend.emails.send({
       from: fromAddress,
       to: email,
       replyTo: supportEmail.includes("@") ? supportEmail : undefined,
-      subject: "🔐 Restablece tu contraseña — Neon Shop",
-      html: buildPasswordResetEmailHtml(resetUrl),
+      subject: `🔐 Restablece tu contraseña — ${storeName}`,
+      html: buildPasswordResetEmailHtml(resetUrl, storeName),
     });
 
     if (sendError) {

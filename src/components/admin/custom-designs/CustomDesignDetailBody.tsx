@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
@@ -14,6 +16,7 @@ import {
 import { formatAdminDateTime } from "@/lib/admin-utils";
 import { resolvePublicStorageUrl } from "@/lib/storage-url";
 import { buildWhatsAppUrl } from "@/lib/whatsapp-utils";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { formatUsd } from "@/lib/utils";
 import type { AdminCustomDesign } from "@/types/admin";
 
@@ -52,10 +55,11 @@ function ImageLink({ url, label }: { url: string; label: string }) {
 }
 
 export function CustomDesignDetailBody({ design }: CustomDesignDetailBodyProps) {
+  const storeName = useStoreName();
   const whatsappUrl = design.customer_phone
     ? buildWhatsAppUrl(
         design.customer_phone,
-        `Hola ${design.customer_name}, te contactamos desde Neon Shop sobre tu solicitud de diseño personalizado.`,
+        `Hola ${design.customer_name}, te contactamos desde ${storeName} sobre tu solicitud de diseño personalizado.`,
       )
     : null;
 

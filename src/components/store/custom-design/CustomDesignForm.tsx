@@ -16,15 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomDesignFileDropzone } from "@/components/store/custom-design/CustomDesignFileDropzone";
-import { CustomDesignSelectField } from "@/components/store/custom-design/CustomDesignSelectField";
-import {
-  BUDGET_OPTIONS,
-  DELIVERY_TIME_OPTIONS,
-  MATERIAL_OPTIONS,
-  PURPOSE_OPTIONS,
-  SIZE_OPTIONS,
-  USAGE_OPTIONS,
-} from "@/components/store/custom-design/custom-design-options";
+import { CustomDesignOptionalAccordion } from "@/components/store/custom-design/CustomDesignOptionalAccordion";
 import { uploadCustomDesignLogo } from "@/lib/api";
 import {
   showCustomDesignErrorToast,
@@ -102,62 +94,7 @@ export function CustomDesignForm() {
           className="mt-8 space-y-6"
           noValidate
         >
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <CustomDesignSelectField
-              control={form.control}
-              name="preferred_size"
-              label="Tamaño aproximado"
-              options={SIZE_OPTIONS}
-            />
-            <CustomDesignSelectField
-              control={form.control}
-              name="budget_range"
-              label="Presupuesto estimado"
-              options={BUDGET_OPTIONS}
-            />
-            <CustomDesignSelectField
-              control={form.control}
-              name="purpose"
-              label="¿Para qué usarás el letrero?"
-              options={PURPOSE_OPTIONS}
-            />
-            <FormField
-              control={form.control}
-              name="delivery_address"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>Dirección de entrega</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Código postal, ciudad (p. ej., 28013 Madrid)"
-                      aria-invalid={!!fieldState.error}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <CustomDesignSelectField
-              control={form.control}
-              name="material"
-              label="Material"
-              options={MATERIAL_OPTIONS}
-            />
-            <CustomDesignSelectField
-              control={form.control}
-              name="usage_type"
-              label="¿Uso interior o exterior?"
-              options={USAGE_OPTIONS}
-            />
-          </div>
-
-          <CustomDesignSelectField
-            control={form.control}
-            name="delivery_time"
-            label="Tiempo de entrega estimado (producción + envío)"
-            options={DELIVERY_TIME_OPTIONS}
-          />
+          <CustomDesignOptionalAccordion control={form.control} />
 
           <FormField
             control={form.control}

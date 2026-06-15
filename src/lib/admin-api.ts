@@ -1,3 +1,4 @@
+import { ADMIN_UNAUTHORIZED_MESSAGE } from "@/lib/admin-auth-messages";
 import type {
   AddAdminProductImageResponse,
   AddAdminPromotionImageResponse,
@@ -53,7 +54,7 @@ function getAdminHeaders(): HeadersInit {
       : null;
 
   if (!token) {
-    throw new Error("No autorizado");
+    throw new Error(ADMIN_UNAUTHORIZED_MESSAGE);
   }
 
   return {
@@ -64,7 +65,7 @@ function getAdminHeaders(): HeadersInit {
 
 async function parseAdminError(res: Response): Promise<string> {
   if (res.status === 401 || res.status === 403) {
-    return "No autorizado";
+    return ADMIN_UNAUTHORIZED_MESSAGE;
   }
 
   try {
@@ -85,7 +86,7 @@ function getAdminAuthHeader(): string {
       : null;
 
   if (!token) {
-    throw new Error("No autorizado");
+    throw new Error(ADMIN_UNAUTHORIZED_MESSAGE);
   }
 
   return `Bearer ${token}`;
@@ -383,5 +384,17 @@ export async function deleteAdminCustomDesign(
   return fetchAdminApi<DeleteAdminCustomDesignResponse>(
     `/api/admin/custom-designs/${id}`,
     { method: "DELETE" },
+  );
+}
+
+export async function uploadAdminFounderImage(
+  file: File,
+): Promise<{ image_url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return fetchAdminFormData<{ image_url: string }>(
+    "/api/admin/founder-image",
+    formData,
   );
 }

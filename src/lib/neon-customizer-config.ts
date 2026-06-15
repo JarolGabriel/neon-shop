@@ -85,9 +85,12 @@ export const BACKGROUNDS = [
   { id: "dark", src: "", label: "Negro", width: 0, height: 0 },
 ] as const;
 
-import { PRODUCT_SIZE_PRESETS } from "@/lib/product-size-pricing";
+import { PRODUCT_SIZE_PRICE_TIERS } from "@/lib/product-size-pricing";
 
-export const SIZE_OPTIONS = PRODUCT_SIZE_PRESETS;
+export const SIZE_OPTIONS = PRODUCT_SIZE_PRICE_TIERS.map((tier) => ({
+  value: tier.value,
+  label: tier.label,
+}));
 
 export const SPECIAL_EFFECTS = [
   {

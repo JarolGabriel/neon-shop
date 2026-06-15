@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { OrderConfirmationView } from "@/components/store/order/OrderConfirmationView";
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
 
-export const metadata: Metadata = {
-  title: "Confirmación de pedido | Neon Shop",
-  description:
-    "Resumen de tu pedido en Neon Shop. Abre WhatsApp para coordinar la entrega con el taller.",
-  openGraph: {
-    title: "Confirmación de pedido | Neon Shop",
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Confirmación de pedido", {
     description:
-      "Tu pedido fue registrado. Coordina los detalles finales por WhatsApp.",
-    type: "website",
-  },
-};
+      "Resumen de tu pedido. Abre WhatsApp para coordinar la entrega con el taller.",
+    openGraph: {
+      description:
+        "Tu pedido fue registrado. Coordina los detalles finales por WhatsApp.",
+      type: "website",
+    },
+  });
+}
 
 export default function MiPedidoPage() {
   return (

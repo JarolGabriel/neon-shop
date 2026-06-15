@@ -1,14 +1,21 @@
 "use client";
 
+import { AdminErrorBanner } from "@/components/admin/AdminErrorBanner";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableSkeleton } from "@/components/admin/AdminTableSkeleton";
+import { SettingsFounderSection } from "@/components/admin/settings/SettingsFounderSection";
+import { SettingsIdentitySection } from "@/components/admin/settings/SettingsIdentitySection";
+import { SettingsBrandingSection } from "@/components/admin/settings/SettingsBrandingSection";
 import { SettingsContactSection } from "@/components/admin/settings/SettingsContactSection";
 import { SettingsPoliciesSection } from "@/components/admin/settings/SettingsPoliciesSection";
 import { SettingsSocialSection } from "@/components/admin/settings/SettingsSocialSection";
 import { Button } from "@/components/ui/button";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import type {
+  AdminBrandingSettingsInput,
   AdminContactSettingsInput,
+  AdminFounderSettingsInput,
+  AdminIdentitySettingsInput,
   AdminPoliciesSettingsInput,
   AdminSocialSettingsInput,
 } from "@/lib/schemas/admin-settings";
@@ -22,6 +29,70 @@ type PolicySettingKey =
 export function AdminSettingsView() {
   const { settings, isLoading, isSaving, error, refresh, saveSettings } =
     useAdminSettings();
+
+  const saveIdentity = async (values: AdminIdentitySettingsInput) => {
+    await saveSettings([
+      {
+        key: SITE_SETTING_KEYS.siteName,
+        value: values[SITE_SETTING_KEYS.siteName],
+        description:
+          "Nombre comercial de la tienda (aparece en el título del navegador y Google)",
+      },
+      {
+        key: SITE_SETTING_KEYS.siteTagline,
+        value: values[SITE_SETTING_KEYS.siteTagline],
+        description: "Slogan o subtítulo de la tienda",
+      },
+      {
+        key: SITE_SETTING_KEYS.siteDescription,
+        value: values[SITE_SETTING_KEYS.siteDescription],
+        description:
+          "Descripción SEO que aparece en Google y al compartir en redes sociales",
+      },
+      {
+        key: SITE_SETTING_KEYS.ogImageUrl,
+        value: values[SITE_SETTING_KEYS.ogImageUrl] ?? "",
+        description:
+          "URL absoluta de la imagen que aparece al compartir en WhatsApp, Twitter, etc.",
+      },
+    ]);
+  };
+
+  const saveBranding = async (values: AdminBrandingSettingsInput) => {
+    await saveSettings([
+      {
+        key: SITE_SETTING_KEYS.storeName,
+        value: values[SITE_SETTING_KEYS.storeName],
+        description: "Nombre público de la tienda (navbar, emails, SEO)",
+      },
+    ]);
+  };
+
+  const saveFounder = async (values: AdminFounderSettingsInput) => {
+    await saveSettings([
+      {
+        key: SITE_SETTING_KEYS.founderName,
+        value: values[SITE_SETTING_KEYS.founderName],
+        description:
+          "Nombre del fundador en Home y Quiénes somos (usa {{store_name}})",
+      },
+      {
+        key: SITE_SETTING_KEYS.founderImageUrl,
+        value: values[SITE_SETTING_KEYS.founderImageUrl],
+        description: "Foto del fundador (ruta local o URL de Supabase Storage)",
+      },
+      {
+        key: SITE_SETTING_KEYS.founderImageAlt,
+        value: values[SITE_SETTING_KEYS.founderImageAlt],
+        description: "Texto alternativo de la foto del fundador",
+      },
+      {
+        key: SITE_SETTING_KEYS.founderSectionHeading,
+        value: values[SITE_SETTING_KEYS.founderSectionHeading],
+        description: "Título de la sección del fundador en la página de inicio",
+      },
+    ]);
+  };
 
   const saveContact = async (values: AdminContactSettingsInput) => {
     await saveSettings([
@@ -120,20 +191,25 @@ export function AdminSettingsView() {
       />
 
       {error ? (
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <p>{error}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refresh()}
-            className="border-red-200 bg-white"
-          >
-            Reintentar
-          </Button>
-        </div>
+        <AdminErrorBanner message={error} onRetry={() => void refresh()} />
       ) : null}
 
       <div className="space-y-6">
+        <SettingsIdentitySection
+          settings={settings}
+          isSaving={isSaving}
+          onSave={saveIdentity}
+        />
+        <SettingsBrandingSection
+          settings={settings}
+          isSaving={isSaving}
+          onSave={saveBranding}
+        />
+        <SettingsFounderSection
+          settings={settings}
+          isSaving={isSaving}
+          onSave={saveFounder}
+        />
         <SettingsContactSection
           settings={settings}
           isSaving={isSaving}

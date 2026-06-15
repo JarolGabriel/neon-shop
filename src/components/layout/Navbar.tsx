@@ -25,11 +25,13 @@ import {
 } from "@/components/ui/navigation-menu";
 import { COMMUNITY_PATH } from "@/lib/community-routes";
 import { useAuth } from "@/context/AuthContext";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { useNavbarHidden } from "@/hooks/useScrollDirection";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const storeName = useStoreName();
   const isHidden = useNavbarHidden();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -51,7 +53,7 @@ export function Navbar() {
             <Image src="/icon.svg" alt="" width={28} height={28} priority />
 
             <span className="font-heading text-base font-bold text-neon-pink transition-colors duration-200 dark:text-cyber-yellow sm:text-lg">
-              Neon Shop
+              {storeName}
             </span>
           </Link>
 

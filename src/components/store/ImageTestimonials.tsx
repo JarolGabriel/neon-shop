@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { useStoreName } from "@/context/SiteBrandingContext";
 import { cn } from "@/lib/utils";
 
 interface ImageTestimonial {
@@ -111,6 +112,7 @@ const NAV_BTN =
 const AUTO_PLAY_MS = 5000;
 
 export function ImageTestimonials() {
+  const storeName = useStoreName();
   const [slideIndex, setSlideIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(1);
 
@@ -165,7 +167,7 @@ export function ImageTestimonials() {
             id="image-testimonials-heading"
             className="font-heading text-xl font-semibold text-foreground sm:text-2xl"
           >
-            Neon-Shop . Opiniones verificadas de clientes
+            {storeName} . Opiniones verificadas de clientes
           </h2>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-foreground">

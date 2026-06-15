@@ -1,3 +1,5 @@
+import { interpolateStoreName } from "@/lib/store-branding";
+
 export interface PolicyLink {
   label: string;
   href: string;
@@ -109,7 +111,7 @@ export function getShippingPolicySections(): PolicySection[] {
           "No enviamos carteles de neón de cristal fuera de Caracas, Miranda o La Guaira debido a su naturaleza frágil. Así que algunos de nuestros productos están limitados solo a EE. UU. y Canadá.",
         ),
         paragraph(
-          "Cada estado tiene sus propias normas y tasas para los productos enviados a dicho estado. Es importante que conozcas las leyes y tasas de envíos de tu propio estado antes de comprar. Neon Shop no te cobra ninguna de estas tasas ni impuestos, y no podemos pagarlos en tu nombre. Estas tarifas son de tu responsabilidad y no están cubiertas por los gastos de envío que te cobramos. Nuestras tarifas de envío solo cubren el transporte del producto. Si no tienes claro cuáles son las tasas de importación de tu gobierno, probablemente puedas encontrar esa información en línea en la web de tu gobierno o en muchas otras páginas que cubren envíos y logística nacionales.",
+          "Cada estado tiene sus propias normas y tasas para los productos enviados a dicho estado. Es importante que conozcas las leyes y tasas de envíos de tu propio estado antes de comprar. {{store_name}} no te cobra ninguna de estas tasas ni impuestos, y no podemos pagarlos en tu nombre. Estas tarifas son de tu responsabilidad y no están cubiertas por los gastos de envío que te cobramos. Nuestras tarifas de envío solo cubren el transporte del producto. Si no tienes claro cuáles son las tasas de importación de tu gobierno, probablemente puedas encontrar esa información en línea en la web de tu gobierno o en muchas otras páginas que cubren envíos y logística nacionales.",
           "Tasas de aduana, tasas de importación, derechos e impuestos.",
         ),
       ],
@@ -117,15 +119,50 @@ export function getShippingPolicySections(): PolicySection[] {
   ];
 }
 
+function interpolatePolicyBlock(
+  block: PolicyBlock,
+  storeName: string,
+): PolicyBlock {
+  if (typeof block === "string") {
+    return interpolateStoreName(block, storeName);
+  }
+
+  return {
+    ...block,
+    text: interpolateStoreName(block.text, storeName),
+    leadIn: block.leadIn
+      ? interpolateStoreName(block.leadIn, storeName)
+      : undefined,
+  };
+}
+
+function interpolatePolicySections(
+  sections: PolicySection[],
+  storeName: string,
+): PolicySection[] {
+  return sections.map((section) => ({
+    ...section,
+    paragraphs: section.paragraphs.map((block) =>
+      interpolatePolicyBlock(block, storeName),
+    ),
+  }));
+}
+
 export function getStaticPolicySections(
   slug: string,
   supportEmail?: string,
+  storeName?: string,
 ): PolicySection[] | null {
+  let sections: PolicySection[] | null = null;
+
   if (slug === "devoluciones") {
-    return getRefundPolicySections(supportEmail);
+    sections = getRefundPolicySections(supportEmail);
+  } else if (slug === "envios") {
+    sections = getShippingPolicySections();
   }
-  if (slug === "envios") {
-    return getShippingPolicySections();
-  }
-  return null;
+
+  if (!sections) return null;
+  if (!storeName) return sections;
+
+  return interpolatePolicySections(sections, storeName);
 }

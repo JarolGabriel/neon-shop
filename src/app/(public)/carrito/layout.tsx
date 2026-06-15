@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
 
-export const metadata: Metadata = {
-  title: "Carrito | Neon Shop",
-  description: "Revisa tu carrito y confirma tu pedido de letreros neón LED.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Carrito", {
+    description: "Revisa tu carrito y confirma tu pedido de letreros neón LED.",
+    robots: { index: false, follow: false },
+  });
+}
 
 export default function CarritoLayout({
   children,

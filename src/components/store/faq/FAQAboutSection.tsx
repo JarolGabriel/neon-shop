@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useStoreName } from "@/context/SiteBrandingContext";
+import { interpolateStoreName } from "@/lib/store-branding";
 
 interface FAQAboutSectionProps {
   supportEmail?: string | null;
@@ -9,21 +13,22 @@ export function FAQAboutSection({
   supportEmail,
   whatsappHref,
 }: FAQAboutSectionProps) {
+  const storeName = useStoreName();
   const email = supportEmail ?? "info@neonshop.com";
 
   return (
     <section className="bg-background px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-          Sobre Neon Shop
+          Sobre {storeName}
         </h2>
 
         <div className="mt-6 space-y-4 text-base leading-relaxed text-foreground/90">
           <p>
-            Fundada en 2025 por Frank, Jose y Nany, Neon Shop es la empresa
-            original que impulsó el movimiento del neón como decoración del hogar
-            y desempeñó un papel importante en la creación de la industria que
-            existe hoy en día.
+            {interpolateStoreName(
+              "Fundada en 2025 por Frank, Jose y Nany, {{store_name}} es la empresa original que impulsó el movimiento del neón como decoración del hogar y desempeñó un papel importante en la creación de la industria que existe hoy en día.",
+              storeName,
+            )}
           </p>
           <p>
             Ofrecemos tanto neones de cristal auténticos como neones LED, así
@@ -73,7 +78,9 @@ export function FAQAboutSection({
             Alternativamente, puedes encontrar respuestas a tus preguntas en las
             preguntas frecuentes que aparecen a continuación.
           </p>
-          <p className="pt-2 font-bold text-foreground">—Neon Shop.</p>
+          <p className="pt-2 font-bold text-foreground">
+            {interpolateStoreName("—{{store_name}}.", storeName)}
+          </p>
         </div>
       </div>
     </section>

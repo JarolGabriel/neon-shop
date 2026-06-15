@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { FavoritosPageContent } from "@/components/store/FavoritosPageContent";
+import { getDefaultPageMetadata } from "@/lib/metadata-utils";
 
-export const metadata: Metadata = {
-  title: "Mis favoritos | Neon Shop",
-  description:
-    "Guarda y revisa tus letreros de neón favoritos en Neon Shop.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getDefaultPageMetadata("Mis favoritos", {
+    description: "Guarda y revisa tus letreros de neón favoritos.",
+    robots: { index: false, follow: false },
+  });
+}
 
 export default function FavoritosPage() {
   return (
