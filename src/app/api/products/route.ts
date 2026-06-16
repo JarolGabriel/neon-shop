@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { parseAvailableColorsFromDb } from "@/lib/product-catalog-options";
 import {
   createSupabaseErrorResponse,
   createUnexpectedErrorResponse,
@@ -18,7 +19,9 @@ const LIST_SELECT = `
   is_active,
   categories (id, name, slug),
   product_images (id, image_url, alt_text, is_primary),
-  product_variants (id, color, color_hex, size, price, stock, is_active)
+  product_variants (id, color, color_hex, size, price, stock, is_active),
+  available_sizes,
+  available_colors
 `;
 
 const CACHE_HEADERS = {
@@ -27,6 +30,16 @@ const CACHE_HEADERS = {
 
 function jsonWithCache<T>(body: T, status = 200) {
   return NextResponse.json(body, { status, headers: CACHE_HEADERS });
+}
+
+function normalizeCatalogProduct<
+  T extends { available_sizes?: string[] | null; available_colors?: unknown },
+>(product: T) {
+  return {
+    ...product,
+    available_sizes: product.available_sizes ?? [],
+    available_colors: parseAvailableColorsFromDb(product.available_colors),
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -67,7 +80,7 @@ export async function GET(request: NextRequest) {
         (a, b) => (order.get(a.slug) ?? 99) - (order.get(b.slug) ?? 99),
       );
 
-      return jsonWithCache({ data: sorted });
+      return jsonWithCache({ data: sorted.map(normalizeCatalogProduct) });
     }
 
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
@@ -216,7 +229,7 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(totalItems / limit);
 
     return jsonWithCache({
-      data: products,
+      data: (products ?? []).map(normalizeCatalogProduct),
       meta: {
         total_items: totalItems,
         page,
