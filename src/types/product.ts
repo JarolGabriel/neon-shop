@@ -33,6 +33,8 @@ export type CatalogProduct = Pick<
   | "sales_count"
   | "is_active"
 > & {
+  available_sizes?: string[] | null;
+  available_colors?: ProductAvailableColor[] | null;
   categories: CatalogCategory | null;
   product_images: CatalogProductImage[];
   product_variants: CatalogProductVariant[];

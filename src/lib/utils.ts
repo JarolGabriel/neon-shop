@@ -1,10 +1,11 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { getProductSizeLabel } from "@/lib/product-catalog-options"
+import { getProductSizeLabel, parseAvailableColorsFromDb } from "@/lib/product-catalog-options"
 import { getPricesForSizes, resolveCompareAtPrice } from "@/lib/product-size-pricing"
 import type {
   CatalogProduct,
   CatalogProductVariant,
+  ProductAvailableColor,
   UniqueColorSwatch,
 } from "@/types/product"
 
@@ -128,6 +129,32 @@ export function getUniqueVariantColors(
   return {
     swatches: all.slice(0, maxVisible),
     overflowCount: Math.max(0, all.length - maxVisible),
+  }
+}
+
+/** Swatches para tarjeta: variantes primero, luego available_colors como respaldo. */
+export function getProductCardColorSwatches(
+  variants: CatalogProductVariant[],
+  availableColors: ProductAvailableColor[] | null | undefined,
+  maxVisible = 4,
+): { swatches: UniqueColorSwatch[]; overflowCount: number } {
+  const fromVariants = getUniqueVariantColors(variants, maxVisible)
+  if (fromVariants.swatches.length > 0) return fromVariants
+
+  const colors = parseAvailableColorsFromDb(availableColors)
+  if (colors.length === 0) {
+    return { swatches: [], overflowCount: 0 }
+  }
+
+  const swatches = colors.slice(0, maxVisible).map((color, index) => ({
+    id: `configured-${color.hex}-${index}`,
+    color: color.label,
+    colorHex: color.hex,
+  }))
+
+  return {
+    swatches,
+    overflowCount: Math.max(0, colors.length - maxVisible),
   }
 }
 

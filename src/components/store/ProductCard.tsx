@@ -6,8 +6,8 @@ import { ProductPrice } from "@/components/store/ProductPrice";
 import { ProductRating } from "@/components/store/ProductRating";
 import {
   getDiscountPercent,
+  getProductCardColorSwatches,
   getProductDisplayPrice,
-  getUniqueVariantColors,
   sortProductImages,
 } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -22,8 +22,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { price, compareAtPrice, showFromLabel } =
     getProductDisplayPrice(product);
   const discountPercent = getDiscountPercent(price, compareAtPrice);
-  const { swatches, overflowCount } = getUniqueVariantColors(
+  const { swatches, overflowCount } = getProductCardColorSwatches(
     product.product_variants,
+    product.available_colors,
   );
 
   return (
