@@ -102,6 +102,14 @@ export function AdminSettingsView() {
         description: "Número de WhatsApp para pedidos y contacto",
       },
       {
+        key: SITE_SETTING_KEYS.whatsappFloatingEnabled,
+        value: values[SITE_SETTING_KEYS.whatsappFloatingEnabled]
+          ? "true"
+          : "false",
+        description:
+          "Mostrar botón flotante de WhatsApp en la tienda (true/false)",
+      },
+      {
         key: SITE_SETTING_KEYS.supportEmail,
         value: values[SITE_SETTING_KEYS.supportEmail],
         description: "Email de soporte al cliente",

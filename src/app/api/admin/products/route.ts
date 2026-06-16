@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const category_id = searchParams.get("category_id") || "";
     const stock_status = searchParams.get("stock_status") || "";
+    const highlight = searchParams.get("highlight") || "";
     const id = searchParams.get("id") || "";
 
     // Calcular rangos matemáticos para el .range() de Supabase
@@ -120,6 +121,12 @@ export async function GET(request: NextRequest) {
       query = query.lte("stock", 3).gt("stock", 0);
     } else if (stock_status === "in_stock") {
       query = query.gt("stock", 3);
+    }
+
+    if (highlight === "featured") {
+      query = query.eq("is_featured", true);
+    } else if (highlight === "best_seller") {
+      query = query.eq("is_best_seller", true);
     }
 
     // 4. ORDENAMIENTO Y PAGINACIÓN

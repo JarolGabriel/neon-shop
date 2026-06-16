@@ -27,6 +27,7 @@ export function AdminProductsView() {
     setSearchInput,
     categoryFilter,
     stockFilter,
+    highlightFilter,
     replaceQuery,
     clearFilters,
   } = useAdminProductFilters();
@@ -108,6 +109,7 @@ export function AdminProductsView() {
         search={searchInput}
         categoryId={categoryFilter}
         stockStatus={stockFilter}
+        highlightFilter={highlightFilter}
         categories={categories}
         onSearchChange={setSearchInput}
         onCategoryChange={(value) =>
@@ -116,6 +118,12 @@ export function AdminProductsView() {
         onStockStatusChange={(value) =>
           replaceQuery({
             stock_status: value === "all" ? null : value,
+            page: "1",
+          })
+        }
+        onHighlightFilterChange={(value) =>
+          replaceQuery({
+            highlight: value === "all" ? null : value,
             page: "1",
           })
         }

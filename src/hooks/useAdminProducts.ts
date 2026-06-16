@@ -82,6 +82,7 @@ export function useAdminProducts(
         search: filters.search,
         category_id: filters.category_id,
         stock_status: filters.stock_status,
+        highlight: filters.highlight,
       });
       setProducts(response.data);
       setMeta(response.meta);
@@ -94,6 +95,7 @@ export function useAdminProducts(
     }
   }, [
     filters.category_id,
+    filters.highlight,
     filters.limit,
     filters.page,
     filters.search,

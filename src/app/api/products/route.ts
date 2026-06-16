@@ -17,6 +17,8 @@ const LIST_SELECT = `
   stock,
   sales_count,
   is_active,
+  is_featured,
+  is_best_seller,
   categories (id, name, slug),
   product_images (id, image_url, alt_text, is_primary),
   product_variants (id, color, color_hex, size, price, stock, is_active),
@@ -24,12 +26,16 @@ const LIST_SELECT = `
   available_colors
 `;
 
-const CACHE_HEADERS = {
-  "Cache-Control": "public, max-age=30, stale-while-revalidate=120",
-};
-
-function jsonWithCache<T>(body: T, status = 200) {
-  return NextResponse.json(body, { status, headers: CACHE_HEADERS });
+function jsonWithCache<T>(body: T, status = 200, maxAge = 30) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control":
+        maxAge <= 0
+          ? "no-store"
+          : `public, max-age=${maxAge}, stale-while-revalidate=120`,
+    },
+  });
 }
 
 function normalizeCatalogProduct<
@@ -101,6 +107,8 @@ export async function GET(request: NextRequest) {
     const size = searchParams.get("size") || "";
     const inStock = searchParams.get("in_stock") === "true";
     const outOfStock = searchParams.get("out_of_stock") === "true";
+    const featured = searchParams.get("featured") === "true";
+    const highlighted = searchParams.get("highlighted") === "true";
     const sortBy = searchParams.get("sort") || "newest";
 
     const from = (page - 1) * limit;
@@ -199,20 +207,29 @@ export async function GET(request: NextRequest) {
       query = query.gt("stock", 0);
     }
 
-    switch (sortBy) {
-      case "price_asc":
-        query = query.order("price", { ascending: true });
-        break;
-      case "price_desc":
-        query = query.order("price", { ascending: false });
-        break;
-      case "best_seller":
-        query = query.order("sales_count", { ascending: false });
-        break;
-      case "newest":
-      default:
-        query = query.order("created_at", { ascending: false });
-        break;
+    if (featured) query = query.eq("is_featured", true);
+    if (highlighted) query = query.eq("is_best_seller", true);
+
+    if (featured || highlighted) {
+      query = query
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: false });
+    } else {
+      switch (sortBy) {
+        case "price_asc":
+          query = query.order("price", { ascending: true });
+          break;
+        case "price_desc":
+          query = query.order("price", { ascending: false });
+          break;
+        case "best_seller":
+          query = query.order("sales_count", { ascending: false });
+          break;
+        case "newest":
+        default:
+          query = query.order("created_at", { ascending: false });
+          break;
+      }
     }
 
     const { data: products, error, count } = await query.range(from, to);
@@ -227,17 +244,22 @@ export async function GET(request: NextRequest) {
 
     const totalItems = count || 0;
     const totalPages = Math.ceil(totalItems / limit);
+    const cacheMaxAge = featured || highlighted ? 0 : 30;
 
-    return jsonWithCache({
-      data: (products ?? []).map(normalizeCatalogProduct),
-      meta: {
-        total_items: totalItems,
-        page,
-        limit,
-        total_pages: totalPages,
-        has_more: page < totalPages,
+    return jsonWithCache(
+      {
+        data: (products ?? []).map(normalizeCatalogProduct),
+        meta: {
+          total_items: totalItems,
+          page,
+          limit,
+          total_pages: totalPages,
+          has_more: page < totalPages,
+        },
       },
-    });
+      200,
+      cacheMaxAge,
+    );
   } catch (error) {
     return createUnexpectedErrorResponse(
       "GET /api/products",

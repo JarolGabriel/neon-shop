@@ -12,6 +12,7 @@ import { ShowroomNav } from "./ShowroomNav";
 import { ShowroomQuickComposer } from "./ShowroomQuickComposer";
 import { ShowroomSearchOverlay } from "./ShowroomSearchOverlay";
 import { ShowroomFeaturedCategories } from "./ShowroomFeaturedCategories";
+import { ShowroomFeaturedProductsMobile } from "./ShowroomFeaturedProductsMobile";
 import { ShowroomMobilePromos } from "./ShowroomMobilePromos";
 import { ShowroomSidebar } from "./ShowroomSidebar";
 
@@ -99,6 +100,8 @@ export function ShowroomPage() {
             <ShowroomMobilePromos />
 
             <ShowroomFeaturedCategories />
+
+            <ShowroomFeaturedProductsMobile />
 
             <div className="hidden lg:block">
               <ShowroomQuickComposer

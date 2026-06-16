@@ -4,9 +4,16 @@ import { cn } from "@/lib/utils";
 interface ProductStatusBadgeProps {
   isActive: boolean | null;
   stock: number | null;
+  isFeatured?: boolean | null;
+  isBestSeller?: boolean | null;
 }
 
-export function ProductStatusBadge({ isActive, stock }: ProductStatusBadgeProps) {
+export function ProductStatusBadge({
+  isActive,
+  stock,
+  isFeatured,
+  isBestSeller,
+}: ProductStatusBadgeProps) {
   const stockValue = stock ?? 0;
   const isLowStock = stockValue > 0 && stockValue <= 3;
 
@@ -36,6 +43,22 @@ export function ProductStatusBadge({ isActive, stock }: ProductStatusBadgeProps)
           className="border-amber-200 bg-amber-50 text-xs text-amber-700"
         >
           Stock bajo
+        </Badge>
+      ) : null}
+      {isFeatured === true ? (
+        <Badge
+          variant="outline"
+          className="border-fuchsia-200 bg-fuchsia-50 text-xs text-fuchsia-700"
+        >
+          Destacado
+        </Badge>
+      ) : null}
+      {isBestSeller === true ? (
+        <Badge
+          variant="outline"
+          className="border-violet-200 bg-violet-50 text-xs text-violet-700"
+        >
+          Más vendido
         </Badge>
       ) : null}
     </div>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ProductCustomizationNote } from "@/components/store/ProductCustomizationNote";
 import { ProductAccordion } from "@/components/store/ProductAccordion";
 import { ProductBenefits } from "@/components/store/ProductBenefits";
+import { ProductHighlightBadges } from "@/components/store/ProductHighlightBadges";
 import { BulkDiscountNotice } from "@/components/store/BulkDiscountNotice";
 import { PaymentInfoCard } from "@/components/store/PaymentInfoCard";
 import { ProductRating } from "@/components/store/ProductRating";
@@ -209,6 +210,11 @@ export function ProductInfo({
         <h1 className="font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">
           {product.name}
         </h1>
+
+        <ProductHighlightBadges
+          isFeatured={product.is_featured}
+          isBestSeller={product.is_best_seller}
+        />
 
         <div className="flex flex-wrap items-center gap-3">
           {discount != null ? (

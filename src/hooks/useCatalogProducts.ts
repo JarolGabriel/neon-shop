@@ -11,6 +11,8 @@ export const CATALOG_PAGE_SIZE = 12;
 const DEFAULT_SORT: CatalogSortOption = "best_seller";
 export const DEFAULT_MAX_PRICE = 999;
 
+export type CatalogHighlightFilter = "all" | "featured" | "best_seller";
+
 export interface CatalogFilterState {
   search: string;
   category: string;
@@ -19,7 +21,13 @@ export interface CatalogFilterState {
   inStock: boolean;
   outOfStock: boolean;
   sort: CatalogSortOption;
+  highlight: CatalogHighlightFilter;
   page: number;
+}
+
+function parseHighlight(value: string | null): CatalogHighlightFilter {
+  if (value === "featured" || value === "best_seller") return value;
+  return "all";
 }
 
 function parseSort(value: string | null): CatalogSortOption {
@@ -46,6 +54,13 @@ function parseFilters(searchParams: URLSearchParams): CatalogFilterState {
     inStock: searchParams.get("in_stock") === "true",
     outOfStock: searchParams.get("out_of_stock") === "true",
     sort: parseSort(searchParams.get("sort")),
+    highlight: parseHighlight(
+      searchParams.get("featured") === "true"
+        ? "featured"
+        : searchParams.get("highlighted") === "true"
+          ? "best_seller"
+          : null,
+    ),
     page: Math.max(1, Number(searchParams.get("page") ?? "1") || 1),
   };
 }
@@ -60,6 +75,8 @@ function buildQueryString(filters: CatalogFilterState): string {
     params.set("max_price", String(filters.maxPrice));
   if (filters.inStock) params.set("in_stock", "true");
   if (filters.outOfStock) params.set("out_of_stock", "true");
+  if (filters.highlight === "featured") params.set("featured", "true");
+  if (filters.highlight === "best_seller") params.set("highlighted", "true");
   if (filters.sort !== DEFAULT_SORT) params.set("sort", filters.sort);
   if (filters.page > 1) params.set("page", String(filters.page));
 
@@ -113,6 +130,8 @@ export function useCatalogProducts() {
         filters.maxPrice < DEFAULT_MAX_PRICE ? filters.maxPrice : undefined,
       in_stock: filters.inStock || undefined,
       out_of_stock: filters.outOfStock || undefined,
+      featured: filters.highlight === "featured" || undefined,
+      highlighted: filters.highlight === "best_seller" || undefined,
     })
       .then((response) => {
         if (cancelled) return;

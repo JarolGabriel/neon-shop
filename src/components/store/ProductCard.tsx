@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProductCardShell } from "@/components/store/ProductCardShell";
 import { ProductColorSwatches } from "@/components/store/ProductColorSwatches";
+import { ProductHighlightBadges } from "@/components/store/ProductHighlightBadges";
 import { ProductImageGallery } from "@/components/store/ProductImageGallery";
 import { ProductPrice } from "@/components/store/ProductPrice";
 import { ProductRating } from "@/components/store/ProductRating";
@@ -29,13 +30,20 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   return (
     <ProductCardShell className={className}>
-      <ProductImageGallery
-        images={images}
-        productName={product.name}
-        productId={product.id}
-        discountPercent={discountPercent}
-        href={`/productos/${product.slug}`}
-      />
+      <div className="relative">
+        <ProductImageGallery
+          images={images}
+          productName={product.name}
+          productId={product.id}
+          discountPercent={discountPercent}
+          href={`/productos/${product.slug}`}
+        />
+        <ProductHighlightBadges
+          isFeatured={product.is_featured}
+          isBestSeller={product.is_best_seller}
+          variant="corner"
+        />
+      </div>
 
       <Link
         href={`/productos/${product.slug}`}

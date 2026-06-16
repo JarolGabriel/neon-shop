@@ -5,6 +5,7 @@ export const SITE_SETTING_KEYS = {
   siteDescription: "site_description",
   ogImageUrl: "og_image_url",
   whatsappNumber: "whatsapp_number",
+  whatsappFloatingEnabled: "whatsapp_floating_enabled",
   supportEmail: "support_email",
   address: "address",
   businessHours: "business_hours",

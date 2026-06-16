@@ -86,7 +86,7 @@ export function ProductDetailFields({
             <div>
               <FormLabel className="text-slate-700">Destacado</FormLabel>
               <FormDescription className="text-slate-500">
-                Puede usarse para promocionar el producto en la tienda.
+                Aparece en Home y Comunidad si el producto está activo.
               </FormDescription>
             </div>
             <FormControl>
@@ -108,6 +108,9 @@ export function ProductDetailFields({
             <FormItem className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
               <div>
                 <FormLabel className="text-slate-700">Más vendido</FormLabel>
+                <FormDescription className="text-slate-500">
+                  Aparece en la sección Más vendidos del Home si está activo.
+                </FormDescription>
               </div>
               <FormControl>
                 <Switch

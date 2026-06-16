@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getProducts } from "@/lib/api";
+import { getFeaturedProducts } from "@/lib/api";
 import { useStoreName } from "@/context/SiteBrandingContext";
 import { formatUsd, getProductDisplayPrice } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -25,7 +25,7 @@ export function ShowroomFeaturedProduct() {
   useEffect(() => {
     let active = true;
 
-    void getProducts({ limit: FEATURED_COUNT, sort: "best_seller" })
+    void getFeaturedProducts(FEATURED_COUNT)
       .then(({ data }) => {
         if (active) setProducts(data.slice(0, FEATURED_COUNT));
       })
@@ -57,15 +57,7 @@ export function ShowroomFeaturedProduct() {
     [products, activeIndex],
   );
 
-  if (isLoading) {
-    return (
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="h-40 animate-pulse rounded-lg bg-muted" />
-      </section>
-    );
-  }
-
-  if (!activeProduct) return null;
+  if (isLoading || !activeProduct) return null;
 
   const imageUrl = getProductImage(activeProduct);
 
@@ -74,7 +66,7 @@ export function ShowroomFeaturedProduct() {
       <div className="flex items-center gap-2">
         <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
         <h2 className="font-heading text-base font-bold text-foreground">
-          Destacado ahora
+          Productos destacados
         </h2>
       </div>
 

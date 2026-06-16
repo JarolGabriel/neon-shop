@@ -126,6 +126,8 @@ export function ProductsTable({
                   <ProductStatusBadge
                     isActive={product.is_active}
                     stock={product.stock}
+                    isFeatured={product.is_featured}
+                    isBestSeller={product.is_best_seller}
                   />
                 </TableCell>
                 <TableCell>

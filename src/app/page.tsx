@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { AboutFounder } from "@/components/store/AboutFounder";
+import { BestSellerProductsSection } from "@/components/store/BestSellerProductsSection";
 import { FeaturedCategoriesSection } from "@/components/store/FeaturedCategoriesSection";
+import { FeaturedProductsSection } from "@/components/store/FeaturedProductsSection";
 import { ImageTestimonials } from "@/components/store/ImageTestimonials";
 import { VideoTestimonials } from "@/components/store/VideoTestimonials";
 import { CustomShowcase } from "@/components/store/CustomShowcase";
@@ -38,6 +40,8 @@ export default function Home() {
       <Hero />
       <FeaturesCTA />
       <FeaturedCategoriesSection />
+      <FeaturedProductsSection />
+      <BestSellerProductsSection />
       <CustomShowcase />
       <AboutFounder />
       <VideoTestimonials />

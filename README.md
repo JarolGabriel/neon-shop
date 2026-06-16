@@ -27,7 +27,8 @@ Catálogo · Carrito · Checkout vía WhatsApp · Panel admin · Showroom comuni
 <br />
 
 [**Ver repositorio**](https://github.com/JarolGabriel/neon-shop) ·
-[**Tienda en vivo**](https://www.neonshop.shop/) ·
+[**Neon Shop**](https://www.neonshop.shop/) ·
+[**Liem Shop**](https://liem.neonshop.shop/) ·
 [**Inicio rápido**](#inicio-rápido) ·
 [**Rutas**](#rutas-de-la-aplicación) ·
 [**Despliegue**](#despliegue-vercel) ·
@@ -41,7 +42,8 @@ Catálogo · Carrito · Checkout vía WhatsApp · Panel admin · Showroom comuni
 
 | Entorno | URL |
 |---------|-----|
-| **Producción (dominio propio)** | [https://www.neonshop.shop/](https://www.neonshop.shop/) |
+| **Neon Shop (producción)** | [https://www.neonshop.shop/](https://www.neonshop.shop/) |
+| **Liem Shop (instancia white-label)** | [https://liem.neonshop.shop/](https://liem.neonshop.shop/) |
 | **Vercel (preview `main`)** | [neon-shop-git-main-jarol-gabriels-projects.vercel.app](https://neon-shop-git-main-jarol-gabriels-projects.vercel.app) |
 
 Correos transaccionales vía **Resend** con dominio verificado `neonshop.shop` (`no-reply@neonshop.shop`).
@@ -303,7 +305,7 @@ Seed opcional de redes:
 node scripts/seed-site-settings-social.mjs
 ```
 
-**White-label (mismo código, dos tiendas):** despliega el repo en dos proyectos Vercel + Supabase (o dos bases de datos). En cada admin, configura `store_name` (ej. `Neon Shop` vs `Liem Shop`), `whatsapp_number`, `support_email`, etc. La migración `20260616000000_add_store_name_setting.sql` inserta el valor por defecto `Neon Shop` si no existe.
+**White-label (mismo código, dos tiendas):** despliega el repo en dos proyectos Vercel + Supabase (o dos bases de datos). En cada admin, configura `store_name` (ej. `Neon Shop` vs `Liem Shop`), `whatsapp_number`, `support_email`, etc. Ejemplos en vivo: [Neon Shop](https://www.neonshop.shop/) y [Liem Shop](https://liem.neonshop.shop/). La migración `20260616000000_add_store_name_setting.sql` inserta el valor por defecto `Neon Shop` si no existe.
 
 ### 5. Arrancar en desarrollo
 
@@ -375,7 +377,8 @@ Paleta cyberpunk documentada en `DESIGN_SYSTEM.md`:
 
 | Recurso | Valor |
 |---------|-------|
-| Dominio producción | [neonshop.shop](https://www.neonshop.shop/) |
+| Neon Shop (producción) | [www.neonshop.shop](https://www.neonshop.shop/) |
+| Liem Shop (white-label) | [liem.neonshop.shop](https://liem.neonshop.shop/) |
 | Deploy Vercel (`main`) | `neon-shop-git-main-jarol-gabriels-projects.vercel.app` |
 | Email (Resend) | `no-reply@neonshop.shop` (dominio `neonshop.shop` verificado) |
 
@@ -422,6 +425,6 @@ Proyecto privado — todos los derechos reservados.
 
 Desarrollado con **Next.js** y **Supabase**
 
-[neonshop.shop](https://www.neonshop.shop/) · [github.com/JarolGabriel/neon-shop](https://github.com/JarolGabriel/neon-shop)
+[neonshop.shop](https://www.neonshop.shop/) · [liem.neonshop.shop](https://liem.neonshop.shop/) · [github.com/JarolGabriel/neon-shop](https://github.com/JarolGabriel/neon-shop)
 
 </div>

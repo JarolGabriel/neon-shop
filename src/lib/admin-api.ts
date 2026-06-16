@@ -241,6 +241,7 @@ function buildAdminProductsQuery(params: AdminProductsQuery): string {
   if (params.search) search.set("search", params.search);
   if (params.category_id) search.set("category_id", params.category_id);
   if (params.stock_status) search.set("stock_status", params.stock_status);
+  if (params.highlight) search.set("highlight", params.highlight);
   if (params.id) search.set("id", params.id);
 
   const query = search.toString();
