@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { AdminProductStockStatus, AdminProductsQuery } from "@/types/admin";
+import type { AdminProductStockStatus, AdminProductsQuery, AdminProductHighlightFilter } from "@/types/admin";
 
 function parseStockStatus(value: string | null): AdminProductStockStatus | "all" {
   if (
@@ -12,6 +12,13 @@ function parseStockStatus(value: string | null): AdminProductStockStatus | "all"
   ) {
     return value;
   }
+  return "all";
+}
+
+function parseHighlightFilter(
+  value: string | null,
+): AdminProductHighlightFilter | "all" {
+  if (value === "featured" || value === "best_seller") return value;
   return "all";
 }
 
@@ -36,6 +43,10 @@ export function useAdminProductFilters() {
       stock_status: (() => {
         const status = parseStockStatus(searchParams.get("stock_status"));
         return status === "all" ? undefined : status;
+      })(),
+      highlight: (() => {
+        const highlight = parseHighlightFilter(searchParams.get("highlight"));
+        return highlight === "all" ? undefined : highlight;
       })(),
     }),
     [searchParams],
@@ -69,6 +80,7 @@ export function useAdminProductFilters() {
     setSearchInput,
     categoryFilter: searchParams.get("category_id") ?? "all",
     stockFilter: parseStockStatus(searchParams.get("stock_status")),
+    highlightFilter: parseHighlightFilter(searchParams.get("highlight")),
     replaceQuery,
     clearFilters: () => {
       setSearchInput("");
@@ -76,6 +88,7 @@ export function useAdminProductFilters() {
         search: null,
         category_id: null,
         stock_status: null,
+        highlight: null,
         page: "1",
       });
     },

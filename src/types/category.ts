@@ -25,4 +25,8 @@ export interface CatalogQueryParams {
   in_stock?: boolean;
   out_of_stock?: boolean;
   sort?: CatalogSortOption;
+  /** Admin flag: productos marcados como destacados */
+  featured?: boolean;
+  /** Admin flag: productos marcados como más vendidos */
+  highlighted?: boolean;
 }

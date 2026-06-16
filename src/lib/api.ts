@@ -364,10 +364,40 @@ export async function getProducts(
   if (params?.size) query.set("size", params.size);
   if (params?.in_stock) query.set("in_stock", "true");
   if (params?.out_of_stock) query.set("out_of_stock", "true");
+  if (params?.featured) query.set("featured", "true");
+  if (params?.highlighted) query.set("highlighted", "true");
 
   const qs = query.toString();
   return fetchApiWithRetry<CatalogProductsResponse>(
     `/api/products${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export async function getFeaturedProducts(
+  limit = 8,
+): Promise<CatalogProductsResponse> {
+  const query = new URLSearchParams({
+    featured: "true",
+    limit: String(limit),
+    page: "1",
+  });
+  return fetchApiWithRetry<CatalogProductsResponse>(
+    `/api/products?${query}`,
+    { cache: "no-store" },
+  );
+}
+
+export async function getHighlightedProducts(
+  limit = 8,
+): Promise<CatalogProductsResponse> {
+  const query = new URLSearchParams({
+    highlighted: "true",
+    limit: String(limit),
+    page: "1",
+  });
+  return fetchApiWithRetry<CatalogProductsResponse>(
+    `/api/products?${query}`,
+    { cache: "no-store" },
   );
 }
 

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { CatalogAvailabilityFilter } from "@/components/store/catalog/CatalogAvailabilityFilter";
 import { CatalogCategoryFilter } from "@/components/store/catalog/CatalogCategoryFilter";
+import { CatalogHighlightFilter } from "@/components/store/catalog/CatalogHighlightFilter";
 import { CatalogPriceFilter } from "@/components/store/catalog/CatalogPriceFilter";
 import { hasActiveFilters } from "@/components/store/catalog/catalog-filter-utils";
 import { Input } from "@/components/ui/input";
@@ -134,9 +135,21 @@ export function CatalogFiltersPanel({
 
       <Accordion
         type="multiple"
-        defaultValue={["availability", "price", "category"]}
+        defaultValue={["highlight", "availability", "price", "category"]}
         className="w-full"
       >
+        <AccordionItem value="highlight" className="border-border">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline hover:text-neon-pink! dark:hover:text-cyber-yellow!">
+            Visibilidad
+          </AccordionTrigger>
+          <AccordionContent>
+            <CatalogHighlightFilter
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="availability" className="border-border">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline hover:text-neon-pink! dark:hover:text-cyber-yellow!">
             Disponibilidad

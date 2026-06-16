@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   adminContactSettingsSchema,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/schemas/admin-settings";
 import { ADMIN_INPUT_CLASS, ADMIN_TEXTAREA_CLASS } from "@/lib/admin-ui";
 import { SITE_SETTING_KEYS } from "@/types/site-settings";
+import { isWhatsappFloatingEnabled } from "@/lib/site-settings-utils";
 
 interface SettingsContactSectionProps {
   settings: Record<string, string>;
@@ -38,6 +40,7 @@ export function SettingsContactSection({
     resolver: zodResolver(adminContactSettingsSchema),
     defaultValues: {
       [SITE_SETTING_KEYS.whatsappNumber]: "",
+      [SITE_SETTING_KEYS.whatsappFloatingEnabled]: true,
       [SITE_SETTING_KEYS.supportEmail]: "",
       [SITE_SETTING_KEYS.address]: "",
       [SITE_SETTING_KEYS.businessHours]: "",
@@ -48,6 +51,8 @@ export function SettingsContactSection({
     form.reset({
       [SITE_SETTING_KEYS.whatsappNumber]:
         settings[SITE_SETTING_KEYS.whatsappNumber] ?? "",
+      [SITE_SETTING_KEYS.whatsappFloatingEnabled]:
+        isWhatsappFloatingEnabled(settings),
       [SITE_SETTING_KEYS.supportEmail]:
         settings[SITE_SETTING_KEYS.supportEmail] ?? "",
       [SITE_SETTING_KEYS.address]: settings[SITE_SETTING_KEYS.address] ?? "",
@@ -87,6 +92,30 @@ export function SettingsContactSection({
                   footer, checkout y mensajes post-pedido.
                 </FormDescription>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={SITE_SETTING_KEYS.whatsappFloatingEnabled}
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+                <div>
+                  <FormLabel className="text-slate-700">
+                    Botón flotante de WhatsApp
+                  </FormLabel>
+                  <FormDescription className="text-slate-500">
+                    Muestra un botón fijo abajo a la derecha en la tienda
+                    pública. Requiere un número válido arriba.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isSaving}
+                  />
+                </FormControl>
               </FormItem>
             )}
           />

@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { FOOTER_SOCIAL_PLATFORMS } from "@/components/shared/footer-icons";
 import type { FooterLinkItem } from "@/components/shared/footer-data";
 import {
+  buildGeneralWhatsAppInterestMessage,
   buildWhatsAppUrl,
   getWhatsappNumberFromSettings,
 } from "@/lib/whatsapp-utils";
@@ -125,6 +126,30 @@ export function getWhatsappContact(
   if (!href) return null;
 
   return { display, href };
+}
+
+export function isWhatsappFloatingEnabled(
+  settings: Record<string, string>,
+): boolean {
+  const raw =
+    settings[SITE_SETTING_KEYS.whatsappFloatingEnabled]?.trim().toLowerCase();
+  if (!raw) return true;
+  return raw === "true" || raw === "1" || raw === "yes";
+}
+
+export function getWhatsappFloatingHref(
+  settings: Record<string, string>,
+  storeName?: string,
+): string | null {
+  if (!isWhatsappFloatingEnabled(settings)) return null;
+
+  const digits = getWhatsappNumberFromSettings(settings);
+  if (!digits) return null;
+
+  return buildWhatsAppUrl(
+    digits,
+    buildGeneralWhatsAppInterestMessage(storeName),
+  );
 }
 
 export function buildFooterSocialLinks(

@@ -12,6 +12,7 @@ import {
   getFounderProfile,
   getSiteMetadata,
   getStoreName,
+  getWhatsappFloatingHref,
 } from "@/lib/site-settings-utils";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
@@ -56,6 +57,7 @@ export default async function RootLayout({
   const settings = await fetchSiteSettings();
   const storeName = getStoreName(settings);
   const founderProfile = getFounderProfile(settings, storeName);
+  const whatsappFloatingHref = getWhatsappFloatingHref(settings, storeName);
 
   return (
     <html lang="es" className="h-full antialiased" suppressHydrationWarning>
@@ -70,7 +72,10 @@ export default async function RootLayout({
             <AuthProvider>
               <FavoritesProvider>
                 <CartProvider>
-                  <PublicStoreChrome footer={<Footer />}>
+                  <PublicStoreChrome
+                    footer={<Footer />}
+                    whatsappFloatingHref={whatsappFloatingHref}
+                  >
                     {children}
                   </PublicStoreChrome>
                   <Toaster position="top-center" richColors closeButton offset={80} />

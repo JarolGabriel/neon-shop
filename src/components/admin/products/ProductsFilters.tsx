@@ -13,16 +13,30 @@ import {
 import { ADMIN_INPUT_CLASS } from "@/lib/admin-ui";
 import { STOCK_STATUS_OPTIONS } from "@/lib/schemas/admin-product";
 import type { AdminCategory } from "@/types/admin";
-import type { AdminProductStockStatus } from "@/types/admin";
+import type {
+  AdminProductHighlightFilter,
+  AdminProductStockStatus,
+} from "@/types/admin";
+
+const HIGHLIGHT_FILTER_OPTIONS: Array<{
+  value: AdminProductHighlightFilter | "all";
+  label: string;
+}> = [
+  { value: "all", label: "Todos los productos" },
+  { value: "featured", label: "Destacados" },
+  { value: "best_seller", label: "Más vendidos" },
+];
 
 interface ProductsFiltersProps {
   search: string;
   categoryId: string;
   stockStatus: AdminProductStockStatus | "all";
+  highlightFilter: AdminProductHighlightFilter | "all";
   categories: AdminCategory[];
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onStockStatusChange: (value: AdminProductStockStatus | "all") => void;
+  onHighlightFilterChange: (value: AdminProductHighlightFilter | "all") => void;
   onClear: () => void;
 }
 
@@ -30,14 +44,19 @@ export function ProductsFilters({
   search,
   categoryId,
   stockStatus,
+  highlightFilter,
   categories,
   onSearchChange,
   onCategoryChange,
   onStockStatusChange,
+  onHighlightFilterChange,
   onClear,
 }: ProductsFiltersProps) {
   const hasFilters =
-    search.trim().length > 0 || categoryId !== "all" || stockStatus !== "all";
+    search.trim().length > 0 ||
+    categoryId !== "all" ||
+    stockStatus !== "all" ||
+    highlightFilter !== "all";
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-center">
@@ -77,6 +96,24 @@ export function ProductsFilters({
         </SelectTrigger>
         <SelectContent className="bg-white text-slate-900">
           {STOCK_STATUS_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={highlightFilter}
+        onValueChange={(value) =>
+          onHighlightFilterChange(value as AdminProductHighlightFilter | "all")
+        }
+      >
+        <SelectTrigger className={`w-full sm:w-48 ${ADMIN_INPUT_CLASS}`}>
+          <SelectValue placeholder="Visibilidad" />
+        </SelectTrigger>
+        <SelectContent className="bg-white text-slate-900">
+          {HIGHLIGHT_FILTER_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>

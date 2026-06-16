@@ -107,6 +107,13 @@ export function buildWhatsAppUrl(number: string, message?: string): string | nul
   return url;
 }
 
+export function buildGeneralWhatsAppInterestMessage(storeName?: string): string {
+  const name = storeName?.trim() || "Neon Shop";
+  return truncateWhatsappMessage(
+    `Hola! Me interesa un letrero de neón personalizado. ¿Me pueden ayudar con información? (${name})`,
+  );
+}
+
 export interface ProductWhatsAppMessageInput {
   productName: string;
   price: number;

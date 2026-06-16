@@ -32,6 +32,8 @@ export type CatalogProduct = Pick<
   | "size"
   | "sales_count"
   | "is_active"
+  | "is_featured"
+  | "is_best_seller"
 > & {
   available_sizes?: string[] | null;
   available_colors?: ProductAvailableColor[] | null;

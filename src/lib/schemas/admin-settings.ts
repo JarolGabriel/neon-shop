@@ -28,6 +28,7 @@ export const adminContactSettingsSchema = z.object({
     .string()
     .min(10, "Mínimo 10 dígitos")
     .regex(/^[\d+]+$/, "Solo números, con código de país (ej. 58412…)"),
+  [SITE_SETTING_KEYS.whatsappFloatingEnabled]: z.boolean(),
   [SITE_SETTING_KEYS.supportEmail]: z
     .string()
     .email("Introduce un correo válido"),

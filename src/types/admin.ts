@@ -211,12 +211,15 @@ export type AdminProductStockStatus =
   | "low_stock"
   | "out_of_stock";
 
+export type AdminProductHighlightFilter = "featured" | "best_seller";
+
 export interface AdminProductsQuery {
   page?: number;
   limit?: number;
   search?: string;
   category_id?: string;
   stock_status?: AdminProductStockStatus | "";
+  highlight?: AdminProductHighlightFilter | "";
   id?: string;
 }
 
