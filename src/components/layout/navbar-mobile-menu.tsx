@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { CUSTOM_NAV_ITEMS, NAV_ACTION_BTN } from "@/components/layout/navbar-links";
+import { SocialMediaIconLinks } from "@/components/shared/SocialMediaIconLinks";
 import { COMMUNITY_PATH } from "@/lib/community-routes";
+import { getSiteSettings } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCategories } from "@/hooks/useCategories";
 import { getUserFullName } from "@/lib/user-avatar";
@@ -34,6 +36,15 @@ export function NavbarMobileMenu({
   const router = useRouter();
   const { signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!open) return;
+
+    void getSiteSettings()
+      .then(setSettings)
+      .catch(() => setSettings({}));
+  }, [open]);
 
   const closeMenu = () => setOpen(false);
 
@@ -60,10 +71,18 @@ export function NavbarMobileMenu({
         side="right"
         className="flex h-full w-full flex-col gap-0 overflow-hidden border-border bg-neon-surface p-0 sm:max-w-sm"
       >
-        <SheetHeader className="shrink-0 border-b border-border/50 px-4 py-4">
-          <SheetTitle className="font-heading text-neon-pink dark:text-cyber-yellow">
-            Menú
-          </SheetTitle>
+        <SheetHeader className="shrink-0 border-b border-border/50 px-4 py-4 pr-14">
+          <div className="flex items-center gap-3">
+            <SheetTitle className="shrink-0 font-heading text-neon-pink dark:text-cyber-yellow">
+              Menú
+            </SheetTitle>
+            <SocialMediaIconLinks
+              settings={settings}
+              iconClassName="size-4 text-muted-foreground transition-colors duration-200 hover:text-neon-pink! dark:hover:text-cyber-yellow!"
+              onlyConfigured
+              listClassName="flex items-center gap-2.5"
+            />
+          </div>
         </SheetHeader>
 
         <nav
